@@ -269,6 +269,8 @@ var Contacts = (function() {
     if (contactsList) {
       return;
     }
+    utils.PerformanceHelper.list.referenceMark();
+
     contactsList = contactsList || contacts.List;
     var list = document.getElementById('groups-list');
     contactsList.init(list);
@@ -341,6 +343,7 @@ var Contacts = (function() {
 
   var contactListClickHandler = function originalHandler(id) {
     initDetails(function onDetailsReady() {
+      utils.PerformanceHelper.details.initContactDetails();
       contacts.List.getContactById(id, function findCb(contact, fbContact) {
 
         // Enable NFC listening is available
@@ -363,6 +366,11 @@ var Contacts = (function() {
           navigation.go('view-contact-details', 'go-deeper-search');
         } else {
           navigation.go('view-contact-details', 'go-deeper');
+          console.log("@Performance -> Getting contact_rendered measure");
+          utils.PerformanceHelper.details.contactRenderedMark();
+          utils.PerformanceHelper.details.contactRenderedMeasure();
+          var the_measure = utils.PerformanceHelper.common.getLastMeasure('details_contact_rendered');
+          console.log('@Performance -> Contact details rendered in:', the_measure.duration);
         }
       });
     });

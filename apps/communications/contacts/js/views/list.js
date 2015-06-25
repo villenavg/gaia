@@ -682,6 +682,11 @@ contacts.List = (function() {
 
       var newNodes = appendToLists(chunk[i]);
       nodes.push.apply(nodes, newNodes);
+
+      if (i === 0) {
+        utils.PerformanceHelper.list.firstContactRenderedMark();
+        utils.PerformanceHelper.list.firstContactRenderedMeasure();
+      }
     }
 
     // If the search view has been activated by the user, then send newly
@@ -1356,6 +1361,7 @@ contacts.List = (function() {
       var successCb = successCb || loadChunk;
       var num = 0;
       var chunk = [];
+
       cursor.onsuccess = function onsuccess(evt) {
         // Cancel this load operation if requested
         if (cancelLoadCB) {
@@ -1371,6 +1377,8 @@ contacts.List = (function() {
           chunk.push(contact);
           if (num && (num % CHUNK_SIZE === 0)) {
             successCb(chunk);
+            utils.PerformanceHelper.list.chunkContactRenderedMark();
+            utils.PerformanceHelper.list.chunkContactRenderedMeasure();
             chunk = [];
           }
           num++;
@@ -1382,6 +1390,8 @@ contacts.List = (function() {
           var showNoContacs = (num === 0);
           toggleNoContactsScreen(showNoContacs);
           onListRendered();
+          utils.PerformanceHelper.list.allContactsRenderedMark();
+          utils.PerformanceHelper.list.allContactsRenderedMeasure();
           dispatchCustomEvent('listRendered');
           loading = false;
         }

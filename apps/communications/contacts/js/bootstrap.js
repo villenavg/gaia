@@ -201,6 +201,8 @@
     var _cache = _caches.get(aCacheId);
 
     var cache = localStorage.getItem(aCacheId);
+    console.log("@Performance -> Cache content: ", cache);
+    
     if (!cache) {
       return Promise.resolve();
     }

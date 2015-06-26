@@ -28,6 +28,50 @@
     },
     loadEnd: function() {
       window.performance.mark('fullyLoaded');
+    },
+
+    list: {
+      referenceMark: function() {
+        window.performance.mark('listReference');
+      },
+      firstContactRenderedMark: function() {
+        window.performance.mark('listFirstContactRendered');
+      },
+      firstContactRenderedMeasure: function() {
+        window.performance.measure('list_first_contact_rendered', 'listReference', 'listFirstContactRendered');
+      },
+      chunkContactRenderedMark: function(){
+        window.performance.mark('listChunkRendered');
+      },
+      chunkContactRenderedMeasure: function(){
+        window.performance.measure('list_chunk_contact_rendered', 'listReference', 'listChunkRendered');
+      },
+      allContactsRenderedMark: function(){
+        window.performance.mark('listAllRendered');
+      },
+      allContactsRenderedMeasure: function(){
+        window.performance.measure('list_all_contacts_rendered', 'listReference', 'listAllRendered');
+      }
+    },
+    
+    details: {
+      initContactDetails: function() {
+        window.performance.mark("detailsReference");
+      },
+      contactRenderedMark: function() {
+        window.performance.mark("DetailsContactRendered");
+      },
+      contactRenderedMeasure: function() {
+        window.performance.measure("details_contact_rendered", "detailsReference", "DetailsContactRendered");
+      }
+    },
+
+    common: {
+      getLastMeasure: function(measure_name) {
+        var entries = [];
+        entries = window.performance.getEntriesByName(measure_name);
+        return entries[entries.length - 1];
+      }
     }
   };
 

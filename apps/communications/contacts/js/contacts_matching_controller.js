@@ -2,6 +2,7 @@
 /* global Curtain */
 /* global LazyLoader */
 /* global MergeHelper */
+/* global Matcher */
 
 var contacts = window.contacts || {};
 
@@ -65,10 +66,10 @@ if (!contacts.MatchingController) {
                                  '/shared/js/simple_phone_matcher.js',
                                  '/shared/js/contacts/contacts_matcher.js'];
       LazyLoader.load(matcherDependencies, function loaded() {
-        parent.contacts.List.getContactById(cid, function success(mContact) {
+        parent.ContactsService.get(cid, function success(mContact) {
           // Master contact
           contact = mContact;
-          contacts.Matcher.match(contact, 'active', callbacks);
+          Matcher.match(contact, 'active', callbacks);
         }, abort);
       });
     }
@@ -97,7 +98,7 @@ if (!contacts.MatchingController) {
         };
 
         Object.keys(duplicateContacts).forEach(function(cid) {
-          parent.contacts.List.getContactById(cid, function success(contact) {
+           parent.ContactsService.get(cid, function success(contact) {
             duplicateContacts[cid] = {
               matchingContact: contact,
               matchings: duplicateContacts[cid].matchings

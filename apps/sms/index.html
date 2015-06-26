@@ -3,7 +3,8 @@
   <head>
     <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1">
     <meta charset="utf-8">
-    <meta name="theme-color" content="#00b7b7">
+    <meta name="theme-group" content="theme-communications">
+    <meta name="theme-color" content="var(--header-background)">
     <title>Messages</title>
     <!--App Style root.css-->
     <link rel="stylesheet" type="text/css" href="views/shared/style/root.css">
@@ -115,6 +116,9 @@
     <script defer src="views/conversation/js/link_helper.js"></script>
     <script defer src="views/conversation/js/link_action_handler.js"></script>
     <script defer src="views/shared/js/notify.js"></script>
+    <script defer src="lib/bridge.js"></script>
+    <script defer src="services/js/activity/activity_client.js"></script>
+    <script defer src="services/js/activity/activity_shim.js"></script>
     <script defer src="views/shared/js/activity_handler.js"></script>
     <script defer src="views/shared/js/contact_renderer.js"></script>
     <script defer src="views/shared/js/localization_helper.js"></script>
@@ -131,9 +135,9 @@
         <!-- WARNING: the actual value depends on the actual CSS being used in gaia-header -->
         <gaia-header class="view-header regular-header" title-start="0" title-end="100">
           <h1 data-l10n-id="messages"></h1>
-          <a href="#composer" id="threads-composer-link" data-icon="compose"></a>
-          <a id="threads-options-button" data-icon="more"></a>
-          <a id="threads-settings-button" data-icon="settings"></a>
+          <a href="#composer" id="threads-composer-link" data-icon="compose" data-l10n-id="composeLink"></a>
+          <a id="threads-options-button" data-icon="more" data-l10n-id="actionsButton"></a>
+          <a id="threads-settings-button" data-icon="settings" data-l10n-id="settingsButton"></a>
         </gaia-header>
         <article id="threads-container" class="view-body edit-container" data-type="list">
         </article>
@@ -174,8 +178,8 @@
       <section id="thread-messages" class="panel editable-select-mode" role="region" aria-hidden="true">
         <gaia-header id="messages-header" class="view-header regular-header" action="back" no-font-fit>
           <h1 id="messages-header-text" aria-hidden="true"></h1>
-          <button id="messages-call-number-button" data-icon="call" class="hide"></button>
-          <button id="messages-options-button" data-icon="more"></button>
+          <button id="messages-call-number-button" data-icon="call" class="hide" data-l10n-id="callButton"></button>
+          <button id="messages-options-button" data-icon="more" data-l10n-id="actionsButton"></button>
         </gaia-header>
         <div id="messages-subheader" class="subheader">
           <section id="messages-to-field">

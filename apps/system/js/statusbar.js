@@ -78,6 +78,7 @@
 
       window.addEventListener('apptitlestatechanged', this);
       window.addEventListener('activitytitlestatechanged', this);
+      window.addEventListener('homescreentitlestatechanged', this);
       window.addEventListener('appchromecollapsed', this);
       window.addEventListener('appchromeexpanded', this);
       window.addEventListener('iconcreated', this);
@@ -104,6 +105,10 @@
     },
 
     onIconCreated: function sb_onIconCreated(icon) {
+      if (!this.PRIORITIES[icon.dashPureName]) {
+        return;
+      }
+
       this.PRIORITIES[icon.dashPureName].icon = icon;
     },
 
@@ -177,8 +182,13 @@
         case 'iconrendered':
           icon = evt.detail;
           var iconObj = this.PRIORITIES[icon.dashPureName];
+          if (!iconObj) {
+            return;
+          }
+
           var order = iconObj && iconObj.order ? iconObj.order : 1000;
           icon.setOrder(order);
+          this._updateIconVisibility();
           break;
         case 'iconchanged':
           this.cloneStatusbar();
@@ -261,6 +271,7 @@
           /* falls through */
         case 'apptitlestatechanged':
         case 'activitytitlestatechanged':
+        case 'homescreentitlestatechanged':
           this.setAppearance();
           if (!this.isPaused()) {
             this.element.classList.remove('hidden');
@@ -307,9 +318,22 @@
         app.isFullScreenLayout()
       );
 
-      this.element.classList.toggle('maximized', app.isHomescreen ||
-        !!(app.appChrome && app.appChrome.isMaximized()) ||
-           app.isAttentionWindow || app.isLockscreen);
+      var appsWithoutRocketbar = [
+        'isHomescreen',
+        'isAttentionWindow',
+        'isLockscreen'
+      ];
+
+      var noRocketbar = appsWithoutRocketbar.some(function(name) {
+        return !!(app[name]);
+      });
+
+      var chromeMaximized = !!(app.appChrome && app.appChrome.isMaximized());
+      var shouldMaximize = noRocketbar || chromeMaximized;
+
+      // Important: we need a boolean to make the toggle method
+      // takes the right decision
+      this.element.classList.toggle('maximized',  shouldMaximize || false);
     },
 
     _getMaximizedStatusbarWidth: function sb_getMaximizedStatusbarWidth() {
@@ -378,7 +402,7 @@
 
       this._paused++;
     },
- 
+
     resumeUpdate: function sb_resumeUpdate(evtType) {
       var eventGroup = this._eventTypeToEventGroup(evtType);
       if (!this._eventGroupStates[eventGroup]) {
@@ -402,11 +426,11 @@
       switch (evtType) {
         case 'utilitytraywillshow':
         case 'utility-tray-overlayopened':
-        case 'utility-tray-abortclose':
+        case 'utility-tray-abortopen':
           return 'utilitytrayopening';
         case 'utilitytraywillhide':
         case 'utility-tray-overlayclosed':
-        case 'utility-tray-abortopen':
+        case 'utility-tray-abortclose':
           return 'utilitytrayclosing';
         case 'cardviewshown':
         case 'cardviewclosed':
@@ -454,7 +478,7 @@
         this.statusbarIcons.classList.remove(className);
         this.statusbarIconsMin.classList.remove(className);
 
-        var iconWidth = iconObj.width;
+        var iconWidth = this._getIconWidth(iconObj);
 
         maximizedStatusbarWidth -= iconWidth;
         if (maximizedStatusbarWidth < 0) {

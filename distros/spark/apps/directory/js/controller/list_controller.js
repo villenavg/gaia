@@ -1,4 +1,4 @@
-define(["exports", "components/fxos-mvc/dist/mvc", "js/model/list_model", "js/view/tabs_view", "js/view/app_list_view", "js/view/addon_list_view", "js/view/details_view"], function (exports, _componentsFxosMvcDistMvc, _jsModelListModel, _jsViewTabsView, _jsViewAppListView, _jsViewAddonListView, _jsViewDetailsView) {
+define(["exports", "components/fxos-mvc/dist/mvc", "js/model/list_model", "js/view/tabs_view", "js/view/offline_view", "js/view/app_list_view", "js/view/addon_list_view", "js/view/details_view"], function (exports, _componentsFxosMvcDistMvc, _jsModelListModel, _jsViewTabsView, _jsViewOfflineView, _jsViewAppListView, _jsViewAddonListView, _jsViewDetailsView) {
   "use strict";
 
   var _extends = function (child, parent) {
@@ -16,6 +16,7 @@ define(["exports", "components/fxos-mvc/dist/mvc", "js/model/list_model", "js/vi
   var Controller = _componentsFxosMvcDistMvc.Controller;
   var ListModel = _jsModelListModel["default"];
   var TabsView = _jsViewTabsView["default"];
+  var OfflineView = _jsViewOfflineView["default"];
   var AppListView = _jsViewAppListView["default"];
   var AddonListView = _jsViewAddonListView["default"];
   var DetailsView = _jsViewDetailsView["default"];
@@ -25,6 +26,7 @@ define(["exports", "components/fxos-mvc/dist/mvc", "js/model/list_model", "js/vi
 
       this.model = new ListModel();
       this.tabsView = new TabsView();
+      this.offlineView = new OfflineView();
       this.appView = new AppListView();
       this.addonView = new AddonListView();
       this.detailsView = new DetailsView();
@@ -39,7 +41,7 @@ define(["exports", "components/fxos-mvc/dist/mvc", "js/model/list_model", "js/vi
       var hash = window.location.hash;
       var tab = hash && hash.slice(1);
 
-      if (!this.alreadyCreated) {
+      if (!this.initialized) {
         this.createList(tab);
       }
       this.activateTab(tab);
@@ -51,6 +53,8 @@ define(["exports", "components/fxos-mvc/dist/mvc", "js/model/list_model", "js/vi
     };
 
     ListController.prototype.createList = function (tab) {
+      this.offlineView.render();
+      document.body.appendChild(this.offlineView.el);
       this.tabsView.render(tab);
       document.body.appendChild(this.tabsView.el);
       this.appView.render();
@@ -59,24 +63,45 @@ define(["exports", "components/fxos-mvc/dist/mvc", "js/model/list_model", "js/vi
       document.body.appendChild(this.addonView.el);
       this.detailsView.render();
       document.body.appendChild(this.detailsView.el);
-      this.alertDialog = document.querySelector("#alert-dialog");
+      this.alertDialog = document.body.querySelector("#alert-dialog");
 
-      this.list = this.model.getAppList();
-      this.appView.update(this.list);
-      this.addonView.update(this.list);
       this.appView.onInstall(this.handleInstall.bind(this));
       this.addonView.onInstall(this.handleInstall.bind(this));
       this.appView.onDetails(this.handleDetails.bind(this));
       this.addonView.onDetails(this.handleDetails.bind(this));
       this.detailsView.onClose(this.handleCloseDetails.bind(this));
       this.detailsView.onInstall(this.handleInstall.bind(this));
-      this.refreshInstalledList();
 
-      this.alreadyCreated = true;
+      this.getApps();
+      this.watchConnection();
+
+      this.initialized = true;
+    };
+
+    ListController.prototype.getApps = function () {
+      var _this = this;
+      this.model.getAppList().then(function (list) {
+        _this.list = list;
+        _this.refreshInstalledList();
+      });
+    };
+
+    ListController.prototype.watchConnection = function () {
+      window.addEventListener("online", this.handleConnection.bind(this));
+      window.addEventListener("offline", this.handleConnection.bind(this));
+      this.handleConnection();
+    };
+
+    ListController.prototype.handleConnection = function () {
+      var online = navigator.onLine;
+      this.offlineView.update(online);
+      if (online) {
+        this.getApps();
+      }
     };
 
     ListController.prototype.refreshInstalledList = function () {
-      var _this = this;
+      var _this2 = this;
       this.installedApps = Object.create(null);
 
       // Use mgmt.getAll if available to fetch apps,
@@ -94,20 +119,20 @@ define(["exports", "components/fxos-mvc/dist/mvc", "js/model/list_model", "js/vi
         apps.forEach(function (app) {
           installedApps[app.manifestURL] = app;
         });
-        for (var manifestURL in _this.list) {
-          _this.list[manifestURL].installed = !!installedApps[manifestURL];
-          _this.list[manifestURL].mozApp = installedApps[manifestURL] || false;
-          if (_this.detailsView.isShowing(manifestURL)) {
+        for (var manifestURL in _this2.list) {
+          _this2.list[manifestURL].installed = !!installedApps[manifestURL];
+          _this2.list[manifestURL].mozApp = installedApps[manifestURL] || false;
+          if (_this2.detailsView.isShowing(manifestURL)) {
             // If it's showing, repopulate the details view with new app data.
-            _this.detailsView.show(_this.list[manifestURL]);
+            _this2.detailsView.show(_this2.list[manifestURL]);
           }
         }
-        _this.appView.update(_this.list);
-        _this.addonView.update(_this.list);
+        _this2.appView.update(_this2.list);
+        _this2.addonView.update(_this2.list);
       };
 
       req.onerror = function (e) {
-        _this.showAlertDialog("error fetching install apps: " + e.message);
+        _this2.showAlertDialog("error fetching install apps: " + e.message);
         console.log("error fetching installed apps: ", e);
       };
     };
@@ -146,8 +171,8 @@ define(["exports", "components/fxos-mvc/dist/mvc", "js/model/list_model", "js/vi
       }
     };
 
-    ListController.prototype.handleDetails = function (data) {
-      this.detailsView.show(data);
+    ListController.prototype.handleDetails = function (manifestURL) {
+      this.detailsView.show(this.list[manifestURL]);
     };
 
     ListController.prototype.handleCloseDetails = function () {
@@ -156,7 +181,7 @@ define(["exports", "components/fxos-mvc/dist/mvc", "js/model/list_model", "js/vi
     };
 
     ListController.prototype.install = function (appData) {
-      var _this2 = this;
+      var _this3 = this;
       var manifest = appData.manifestURL;
       var type = appData.type;
       var installReq;
@@ -205,11 +230,24 @@ define(["exports", "components/fxos-mvc/dist/mvc", "js/model/list_model", "js/vi
             break;
         }
 
-        _this2.showAlertDialog("INSTALL ERROR: " + errorMsg);
+        _this3.showAlertDialog("INSTALL ERROR: " + errorMsg);
       };
 
       installReq.onsuccess = function () {
-        _this2.refreshInstalledList();
+        if (type === "addon") {
+          // Enable add-ons immediately by default.
+          navigator.mozApps.mgmt.setEnabled(installReq.result, true);
+        }
+        _this3.refreshInstalledList();
+        window.dispatchEvent(new CustomEvent("achievement-rewarded", {
+          detail: {
+            criteria: "achievements/fab-finder",
+            evidence: "urn:fxos-directory:app:installed",
+            name: "Fab Finder",
+            description: "Install an app or add-on from Hackerplace",
+            image: "./img/fab-finder.png"
+          }
+        }));
       };
     };
 

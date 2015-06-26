@@ -8,11 +8,17 @@
 /* global LazyLoader */
 /* global MozActivity */
 /* global Normalizer */
+/* global ContactsService */
 /* global utils */
 /* global TAG_OPTIONS */
 /* global ActionMenu */
 /* global ICEData */
 /* global MergeHelper */
+/* global MainNavigation */
+/* global ExtServices */
+/* global ContactsService */
+/* global Matcher */
+/* global TagSelector */
 
 var contacts = window.contacts || {};
 
@@ -311,7 +317,8 @@ contacts.Form = (function() {
         thumbAction.classList.add(FB_CLASS);
       }
     }
-    Contacts.updatePhoto(currentPhoto, thumb);
+
+    utils.dom.updatePhoto(currentPhoto, thumb);
   }
 
   var showEdit = function showEdit(contact, fromUpdateActivity) {
@@ -365,7 +372,7 @@ contacts.Form = (function() {
         }
       };
 
-      Contacts.confirmDialog(null, msg, noObject, yesObject);
+      ConfirmDialog.show(null, msg, noObject, yesObject);
     };
   };
 
@@ -614,7 +621,10 @@ contacts.Form = (function() {
 
   var onGoToSelectTag = function onGoToSelectTag(evt) {
     evt.preventDefault();
-    Contacts.goToSelectTag(evt);
+    var target = evt.currentTarget;
+    LazyLoader.load('/contacts/js/utilities/tagSelector.js', function() {
+      TagSelector.show(target.children[0]);
+    });
     return false;
   };
 
@@ -631,22 +641,19 @@ contacts.Form = (function() {
       if ('mozNfc' in navigator && contacts.NFC) {
         contacts.NFC.stopListening();
       }
-      Contacts.navigation.home();
+      MainNavigation.home();
     };
-    var request;
 
-    if (fb.isFbContact(contact)) {
-      var fbContact = new fb.Contact(contact);
-      request = fbContact.remove(true);
-      request.onsuccess = deleteSuccess;
-    } else {
-      request = navigator.mozContacts.remove(utils.misc.toMozContact(contact));
-      request.onsuccess = deleteSuccess;
-    }
-
-    request.onerror = function errorDelete() {
-      console.error('Error removing the contact');
-    };
+    ContactsService.remove(
+      contact,
+      function(e) {
+        if (e) {
+          console.error('Error removing the contact');
+          return;
+        }
+        deleteSuccess();
+      }
+    );
   };
 
   var getCurrentPhoto = function cf_getCurrentPhoto() {
@@ -731,7 +738,7 @@ contacts.Form = (function() {
             msgId = 'ICEContactDelTelAll';
             ICEData.removeICEContact(currentContact.id);
           }
-          Contacts.confirmDialog(null, {'id': msgId},
+          ConfirmDialog.show(null, {'id': msgId},
                                  cancelObject);
         }
         else {
@@ -777,62 +784,66 @@ contacts.Form = (function() {
     }
 
     fillContact(myContact, function contactFilled(myContact) {
-      // Use the isEmpty function to check fields but address
+      // Check if all fields but address are empty
       // and inspect address by it self.
       var fields = ['givenName', 'familyName', 'org', 'tel',
         'email', 'note', 'bday', 'anniversary', 'adr'];
-      if (Contacts.isEmpty(myContact, fields)) {
-        return;
-      }
 
-      var contact;
-      if (myContact.id) { //Editing a contact
-        currentContact.tel = [];
-        currentContact.email = [];
-        currentContact.org = [];
-        currentContact.adr = [];
-        currentContact.note = [];
-        currentContact.photo = [];
-        currentContact.bday = null;
-        currentContact.anniversary = null;
-        var readOnly = ['id', 'updated', 'published'];
-        for (var field in myContact) {
-          if (readOnly.indexOf(field) == -1) {
-            currentContact[field] = myContact[field];
-          }
+      // Load what we need to check myContact
+      LazyLoader.load('/contacts/js/utilities/mozContact.js', function() {
+        if (utils.mozContact.haveEmptyFields(myContact, fields)) {
+          return;
         }
-        contact = currentContact;
 
-        if (fb.isFbContact(contact)) {
-          // If it is a FB Contact not linked it will be automatically linked
-          // As now there is additional contact data entered by the user
-          if (!fb.isFbLinked(contact)) {
-            var fbContact = new fb.Contact(contact);
-            // Here the contact has been promoted to linked but not saved yet
-            fbContact.promoteToLinked();
+        var contact;
+        if (myContact.id) { //Editing a contact
+          currentContact.tel = [];
+          currentContact.email = [];
+          currentContact.org = [];
+          currentContact.adr = [];
+          currentContact.note = [];
+          currentContact.photo = [];
+          currentContact.bday = null;
+          currentContact.anniversary = null;
+          var readOnly = ['id', 'updated', 'published'];
+          for (var field in myContact) {
+            if (readOnly.indexOf(field) == -1) {
+              currentContact[field] = myContact[field];
+            }
           }
+          contact = currentContact;
 
-          setPropagatedFlag('givenName', deviceGivenName[0], contact);
-          setPropagatedFlag('familyName', deviceFamilyName[0], contact);
-          createName(contact);
+          if (fb.isFbContact(contact)) {
+            // If it is a FB Contact not linked it will be automatically linked
+            // As now there is additional contact data entered by the user
+            if (!fb.isFbLinked(contact)) {
+              var fbContact = new fb.Contact(contact);
+              // Here the contact has been promoted to linked but not saved yet
+              fbContact.promoteToLinked();
+            }
+
+            setPropagatedFlag('givenName', deviceGivenName[0], contact);
+            setPropagatedFlag('familyName', deviceFamilyName[0], contact);
+            createName(contact);
+          }
+        } else {
+          contact = utils.misc.toMozContact(myContact);
         }
-      } else {
-        contact = utils.misc.toMozContact(myContact);
-      }
 
-      updateCategoryForImported(contact);
+        updateCategoryForImported(contact);
 
-      var callbacks = cookMatchingCallbacks(contact);
-      cancelHandler = doCancel.bind(callbacks);
-      formHeader.addEventListener('action', cancelHandler);
-      doMatch(contact, callbacks);
+        var callbacks = cookMatchingCallbacks(contact);
+        cancelHandler = doCancel.bind(callbacks);
+        formHeader.addEventListener('action', cancelHandler);
+        doMatch(contact, callbacks);
+      });
     });
   }
 
   var cookMatchingCallbacks = function cookMatchingCallbacks(contact) {
     return {
       onmatch: function(results) {
-        Contacts.extServices.showDuplicateContacts();
+        ExtServices.showDuplicateContacts();
 
         mergeHandler = function mergeHandler(e) {
           if (e.origin !== fb.CONTACTS_APP_ORIGIN) {
@@ -986,7 +997,7 @@ contacts.Form = (function() {
     LazyLoader.load(['/shared/js/text_normalizer.js',
                      '/shared/js/simple_phone_matcher.js',
                      '/shared/js/contacts/contacts_matcher.js'], function() {
-      contacts.Matcher.match(contact, 'active', callbacks);
+      Matcher.match(contact, 'active', callbacks);
     });
   };
 
@@ -997,31 +1008,33 @@ contacts.Form = (function() {
     // When we add new contact, it has no id at the beginning. We have one, if
     // we edit current contact. We will use this information below.
     var isNew = contact.id !== 'undefined';
-    var request = navigator.mozContacts.save(utils.misc.toMozContact(contact));
 
-    request.onsuccess = function onsuccess() {
-      hideThrobber();
-      // Reloading contact, as it only allows to be updated once
-      if (ActivityHandler.currentlyHandling) {
-        ActivityHandler.postNewSuccess(contact);
-      }
-      if (!noTransition) {
-        Contacts.cancel();
-      }
+    ContactsService.save(
+      utils.misc.toMozContact(contact),
+      function(e) {
+        if (e) {
+          hideThrobber();
+          console.error('Error saving contact', e);
+          return;
+        }
+        hideThrobber();
+        // Reloading contact, as it only allows to be updated once
+        if (ActivityHandler.currentlyHandling) {
+          ActivityHandler.postNewSuccess(contact);
+        }
+        if (!noTransition) {
+          Contacts.cancel();
+        }
 
-      // Since editing current contact returns to the details view, and adding
-      // the new one to the contacts list, we call setCurrent() only in the
-      // first case, so NFC listeners are not set on the Contact List
-      // (Bug 1041455).
-      if (isNew) {
-        Contacts.setCurrent(contact);
+        // Since editing current contact returns to the details view, and adding
+        // the new one to the contacts list, we call setCurrent() only in the
+        // first case, so NFC listeners are not set on the Contact List
+        // (Bug 1041455).
+        if (isNew) {
+          Contacts.setCurrent(contact);
+        }
       }
-    };
-
-    request.onerror = function onerror() {
-      hideThrobber();
-      console.error('Error saving contact', request.error.name);
-    };
+    );
   };
 
   var showThrobber = function showThrobber() {
@@ -1276,7 +1289,8 @@ contacts.Form = (function() {
   var emptyForm = function emptyForm() {
     var textFields = textFieldsCache.get();
     for (var i = textFields.length - 1; i >= 0; i--) {
-      if (textFields[i].value && textFields[i].value.trim()) {
+      if ((textFields[i].value && textFields[i].value.trim()) ||
+          (textFields[i].valueAsDate)) {
         return false;
       }
     }
@@ -1388,11 +1402,11 @@ contacts.Form = (function() {
       // The local contact now does not have a photo
       deviceContact.photo = null;
       var fbPhoto = ContactPhotoHelper.getFullResolution(fbContact);
-      Contacts.updatePhoto(fbPhoto, thumb);
+      utils.dom.updatePhoto(fbPhoto, thumb);
     }
     else {
       thumbAction.classList.remove('with-photo');
-      Contacts.updatePhoto(null, thumb);
+      utils.dom.updatePhoto(null, thumb);
     }
 
     if (!emptyForm()) {
@@ -1421,7 +1435,7 @@ contacts.Form = (function() {
       // our own copy that is at the right size.
       resizeBlob(this.result.blob, PHOTO_WIDTH, PHOTO_HEIGHT,
                  function(resized) {
-                   Contacts.updatePhoto(resized, thumb);
+                   utils.dom.updatePhoto(resized, thumb);
                    currentPhoto = resized;
                    if (fb.isFbContact(currentContact)) {
                      // We temporarily mark that there is a local photo chosen

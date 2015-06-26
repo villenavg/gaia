@@ -20,6 +20,13 @@ define(["exports"], function (exports) {
 
     _extends(EditController, Controller);
 
+    EditController.prototype.teardown = function () {
+      this.view = null;
+
+      this.target = null;
+      this.changes = null;
+    };
+
     EditController.prototype.open = function (target) {
       this.target = target;
 
@@ -30,7 +37,13 @@ define(["exports"], function (exports) {
     };
 
     EditController.prototype.close = function () {
-      this.view.close();
+      if (this.changes.innerHTML || this.changes.script || this.changes.createAttributes || this.changes.removeAttributes || this.changes.properties) {
+        if (window.confirm("Are you sure you want to discard your changes?")) {
+          this.view.close();
+        }
+      } else {
+        this.view.close();
+      }
     };
 
     EditController.prototype.save = function () {
@@ -44,10 +57,19 @@ define(["exports"], function (exports) {
           generator.opScript(_this.changes.script);
         }
 
+        if (_this.changes.createAttributes) {
+          generator.opCreateAttributes(_this.changes.createAttributes);
+        }
+
+        if (_this.changes.removeAttributes) {
+          generator.opRemoveAttributes(_this.changes.removeAttributes);
+        }
+
         if (_this.changes.properties) {
           generator.opSetProperties(_this.changes.properties);
         }
 
+        _this.changes = {};
         _this.close();
       });
     };

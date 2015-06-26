@@ -11,20 +11,6 @@ marionette('Text selection >', function() {
   apps[FakeTextSelectionApp.ORIGIN] =
     __dirname + '/../apps/faketextselectionapp';
 
-  var client = marionette.client({
-    apps: apps,
-    prefs: {
-      'dom.w3c_touch_events.enabled': 1,
-      'docshell.device_size_is_page_size': true,
-      'dom.mozInputMethod.enabled': false
-    }
-  });
-
-  setup(function() {
-    system = client.loader.getAppClass('system');
-    system.waitForFullyLoaded();
-  });
-
   suite('without lockscreen', function() {
     var fakeTextselectionApp;
     var client = marionette.client({
@@ -38,6 +24,8 @@ marionette('Text selection >', function() {
     });
 
     setup(function() {
+      system = client.loader.getAppClass('system');
+      system.waitForFullyLoaded();
       fakeTextselectionApp = new FakeTextSelectionApp(client);
       action = new Actions(client);
     });
@@ -47,9 +35,9 @@ marionette('Text selection >', function() {
         fakeTextselectionApp.setTestFrame('functionality');
       });
 
-      // XXX: bug 1168326 .
-      test.skip('short cut test', function(done) {
+      test('short cut test', function(done) {
         fakeTextselectionApp.longPress('FunctionalitySourceInput');
+
         // store caret position
         var caretPositionOfSourceInput =
           fakeTextselectionApp.FunctionalitySourceInput
@@ -302,8 +290,7 @@ marionette('Text selection >', function() {
         });
     });
 
-    // XXX: bug 1168326 .
-    suite.skip('selection carets bug', function() {
+    suite('selection carets bug', function() {
       setup(function() {
         fakeTextselectionApp.setTestFrame('bug1120358');
       });
@@ -371,8 +358,9 @@ marionette('Text selection >', function() {
           fakeTextselectionApp.selectAll('BugTextarea');
           assert.ok(fakeTextselectionApp.bubbleVisiblity,
             'bubble should show since we press selectall');
-        });
+      });
     });
+  });
 
   suite('with lockscreen enabled', function() {
     var fakeTextselectionAppWithLockscreen;
@@ -390,6 +378,8 @@ marionette('Text selection >', function() {
     });
 
     setup(function() {
+      system = clientWithLockscreen.loader.getAppClass('system');
+      system.waitForFullyLoaded();
       fakeTextselectionAppWithLockscreen =
         new FakeTextSelectionApp(clientWithLockscreen);
       fakeTextselectionAppWithLockscreen.setTestFrame('bug');
@@ -423,7 +413,6 @@ marionette('Text selection >', function() {
         clientWithLockscreen.waitFor(function() {
           return !fakeTextselectionAppWithLockscreen.bubbleVisiblity;
         });
-      });
     });
   });
 });

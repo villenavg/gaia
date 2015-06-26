@@ -1,5 +1,5 @@
 'use strict';
-/* global KeyNavigationAdapter, AppWidget */
+/* global KeyNavigationAdapter, AppWidget, DigitalClock */
 
 (function(exports) {
 
@@ -27,11 +27,17 @@
         position: 'bottom'
       });
 
+      this.digitalClock = new DigitalClock();
+      this.digitalClock.init();
+      this.digitalClock.start();
     },
 
     onVisibilityChange: function d_onVisibilityChange() {
       if (document.visibilityState !== 'visible') {
         this._clearActiveDirection();
+        document.body.classList.remove('active');
+      } else {
+        document.body.classList.add('active');
       }
     },
 

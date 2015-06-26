@@ -26,11 +26,11 @@
 #                                                                             #
 # Lint your code                                                              #
 #                                                                             #
-# use "make hint" and "make gjslint" to lint using respectively jshint and    #
-# gjslint.                                                                    #
+# Use "make lint" to lint using jshint                                        #
 #                                                                             #
-# Use "make lint" to lint using gjslint for blacklisted files, and jshint for #
-# other files.                                                                #
+# Use "make eslint" to lint using eslint. This is currently used for checks   #
+# that are beyond the other linter's scope, i.e., customized checks for       #
+# discouraged coding patterns or deprecated APIs.                             #
 #                                                                             #
 # APP=<app name> will hint/lint only this app.                                #
 # LINTED_FILES=<list of files> will (h/l)int only these space-separated files #
@@ -118,16 +118,19 @@ REMOTE_DEBUGGER?=0
 # Debug mode for build process
 BUILD_DEBUG?=0
 
-# Are we building for RAPTOR?
-RAPTOR?=0
+# Enable PerformanceTiming logs
+PERF_LOGGING?=0
 
 # Share performance and usage data
 SHARE_PERF_USAGE?=1
 
+# what major version of node we expect to run?
+NODE_VERSION=v0.10
+
 ifeq ($(DEVICE_DEBUG),1)
 REMOTE_DEBUGGER=1
 NO_LOCK_SCREEN=1
-SCREEN_TIMEOUT=300
+SCREEN_TIMEOUT?=300
 endif
 
 # We also disable FTU when running in Firefox or in debug mode
@@ -180,7 +183,7 @@ REPORTER?=mocha-tbpl-reporter
 endif
 REPORTER?=spec
 MARIONETTE_RUNNER_HOST?=marionette-b2gdesktop-host
-TEST_MANIFEST?=./shared/test/integration/local-manifest.json
+TEST_MANIFEST?=$(shell pwd)/shared/test/integration/local-manifest.json
 
 ifeq ($(MAKECMDGOALS), demo)
 GAIA_DOMAIN=thisdomaindoesnotexist.org
@@ -547,7 +550,7 @@ define BUILD_CONFIG
   "REBUILD": "$(REBUILD)", \
   "P" : "$(P)", \
   "VERBOSE" : "$(VERBOSE)", \
-  "RAPTOR" : "$(RAPTOR)", \
+  "PERF_LOGGING" : "$(PERF_LOGGING)", \
   "SHARE_PERF_USAGE": "$(SHARE_PERF_USAGE)", \
   "DEFAULT_KEYBOAD_SYMBOLS_FONT": "$(DEFAULT_KEYBOAD_SYMBOLS_FONT)", \
   "DEFAULT_GAIA_ICONS_FONT": "$(DEFAULT_GAIA_ICONS_FONT)" \
@@ -705,7 +708,7 @@ endif
 
 # this lists the programs we need in the Makefile and that are installed by npm
 
-NPM_INSTALLED_PROGRAMS = node_modules/.bin/mozilla-download node_modules/.bin/jshint node_modules/.bin/mocha
+NPM_INSTALLED_PROGRAMS = node_modules/.bin/mozilla-download node_modules/.bin/jshint node_modules/.bin/mocha node_modules/.bin/eslint
 $(NPM_INSTALLED_PROGRAMS): package.json node_modules
 
 NODE_MODULES_REV=$(shell cat gaia_node_modules.revision)
@@ -745,28 +748,17 @@ npm-cache:
 	@echo "Using pre-deployed cache."
 	npm install
 	touch -c node_modules
+#	@echo $(shell $(NODEJS) --version |awk -F. '{print $1, $2}')
 
-node_modules: gaia_node_modules.revision
-	# Running make without using a dependency ensures that we can run
-	# "make node_modules" with a custom NODE_MODULES_GIT_URL variable, and then
-	# run another target without specifying the variable
-	$(MAKE) $(NODE_MODULES_SRC)
-ifeq "$(NODE_MODULES_SRC)" "modules.tar"
-	$(TAR_WILDCARDS) --strip-components 1 -x -m -f $(NODE_MODULES_SRC) "mozilla-b2g-gaia-node-modules-*/node_modules"
-else ifeq "$(NODE_MODULES_SRC)" "git-gaia-node-modules"
-	rm -fr node_modules
-	cp -R $(NODE_MODULES_SRC)/node_modules node_modules
+node_modules: package.json
+ifneq ($(NODEJS),)
+ifneq ($(NODE_VERSION),$(shell $(NODEJS) --version | awk -F. '{print $$1"."$$2}'))
+	@printf '\033[0;33mPlease use $(NODE_VERSION) of nodejs or it may cause unexpected error.\033[0m\n'
 endif
-ifneq "$(NODE_MODULES_SRC)" "npm-cache"
-	node --version
-	npm --version
-	VIRTUALENV_EXISTS=$(VIRTUALENV_EXISTS) npm install && npm rebuild
-	@echo "node_modules installed."
-	touch -c $@
 endif
-ifeq ($(BUILDAPP),device)
-	export LANG=en_US.UTF-8;
-endif
+	# TODO: Get rid of references to gaia-node-modules stuff.
+	npm install
+	npm run refresh
 
 ###############################################################################
 # Tests                                                                       #
@@ -804,11 +796,8 @@ test-integration: clean $(PROFILE_FOLDER) test-integration-test
 #
 # Remember to remove this target after bug-969215 is finished !
 .PHONY: test-integration-test
-test-integration-test: b2g
-	TEST_MANIFEST=$(TEST_MANIFEST) \
-	./bin/gaia-marionette \
-		--reporter $(REPORTER) \
-		--buildapp $(BUILDAPP)
+test-integration-test: b2g node_modules
+	TEST_MANIFEST=$(TEST_MANIFEST) npm run marionette -- --buildapp="$(BUILDAPP)" --reporter="$(REPORTER)"
 
 .PHONY: jsmarionette-unit-tests
 jsmarionette-unit-tests: b2g node_modules $(PROFILE_FOLDER) tests/jsmarionette/runner/marionette-js-runner/venv
@@ -830,7 +819,7 @@ caldav-server-install:
 
 .PHONY: raptor
 raptor: node_modules
-	RAPTOR=1 GAIA_OPTIMIZE=1 NO_LOCK_SCREEN=1 NOFTU=1 SCREEN_TIMEOUT=0 GAIA_DISTRIBUTION_DIR=node_modules/raptor/dist PROFILE_FOLDER=profile-raptor make reset-gaia
+	PERF_LOGGING=1 DEVICE_DEBUG=1 GAIA_OPTIMIZE=1 NOFTU=1 SCREEN_TIMEOUT=0 GAIA_DISTRIBUTION_DIR=node_modules/raptor/dist PROFILE_FOLDER=profile-raptor make reset-gaia
 
 .PHONY: tests
 tests: app offline
@@ -928,34 +917,21 @@ endif
 # Utils                                                                       #
 ###############################################################################
 
-.PHONY: lint gjslint hint csslint
+.PHONY: lint hint csslint eslint
 
 # Lint apps
-## only gjslint files from build/jshint-xfail.list - files not yet safe to jshint
-## "ls" is used to filter the existing files only, in case the xfail.list is not maintained well enough.
 ifndef LINTED_FILES
 ifdef APP
   JSHINTED_PATH = apps/$(APP)
-  GJSLINTED_PATH = $(shell grep "^apps/$(APP)" build/jshint/xfail.list | ( while read file ; do test -f "$$file" && echo $$file ; done ) )
 else
   JSHINTED_PATH = apps shared build tests tv_apps
-  GJSLINTED_PATH = $(shell ( while read file ; do test -f "$$file" && echo $$file ; done ) < build/jshint/xfail.list )
 endif
 endif
 
 lint:
-	NO_XFAIL=1 $(MAKE) -k gjslint hint jsonlint csslint
+	$(MAKE) -k hint jsonlint csslint
 
-gjslint: GJSLINT_EXCLUDED_DIRS = $(shell grep '\/\*\*$$' .jshintignore | sed 's/\/\*\*$$//' | paste -s -d, -)
-gjslint: GJSLINT_EXCLUDED_FILES = $(shell egrep -v '(\/\*\*|^\s*)$$' .jshintignore | paste -s -d, -)
-gjslint:
-	# gjslint --disable 210,217,220,225 replaces --nojsdoc because it's broken in closure-linter 2.3.10
-	# http://code.google.com/p/closure-linter/issues/detail?id=64
-	@echo Running gjslint...
-	@gjslint --disable 210,217,220,225 --custom_jsdoc_tags="prop,borrows,memberof,augments,exports,global,event,example,mixes,mixin,fires,inner,todo,access,namespace,listens,module,memberOf,property,requires,alias,returns" -e '$(GJSLINT_EXCLUDED_DIRS)' -x '$(GJSLINT_EXCLUDED_FILES)' $(GJSLINTED_PATH) $(LINTED_FILES)
-	@echo Note: gjslint only checked the files that are xfailed for jshint.
-
-JSHINT_ARGS := --reporter=build/jshint/xfail $(JSHINT_ARGS)
+JSHINT_ARGS := --reporter=build/jshint/reporter $(JSHINT_ARGS)
 
 ifdef JSHINTRC
 	JSHINT_ARGS := $(JSHINT_ARGS) --config $(JSHINTRC)
@@ -969,6 +945,12 @@ endif
 hint: node_modules/.bin/jshint
 	@echo Running jshint...
 	@./node_modules/.bin/jshint $(JSHINT_ARGS) $(JSHINTED_PATH) $(LINTED_FILES) || (echo Please consult https://github.com/mozilla-b2g/gaia/tree/master/build/jshint/README.md to get some information about how to fix jshint issues. && exit 1)
+
+eslint: node_modules/.bin/eslint
+	sed 's/\s*#.*$$//' build/eslint/xfail.list | sort -u > build/eslint/xfail.list.tmp
+	@echo Running eslint...
+	@./node_modules/.bin/eslint --ignore-path build/eslint/xfail.list.tmp -f compact -c .eslintrc $(JSHINTED_PATH) $(LINTED_FILES)
+	rm build/eslint/xfail.list.tmp
 
 csslint: b2g_sdk
 	@$(call $(BUILD_RUNNER),csslint)

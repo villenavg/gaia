@@ -2,10 +2,13 @@ var util = require('util');
 var Promise = require('promise');
 var spawn = require('child_process').spawn;
 var Command = require('./command');
+var byline = require('byline');
 var debug = require('debug')('mozdevice:logging');
 
 var ADB_HOST = process.env.ADB_HOST;
 var ADB_PORT = process.env.ADB_PORT;
+
+var DATE_COMMAND = 'date +"%m-%d %H:%M:%S.000"';
 
 // Cache the connection to logcat so we can re-use for additional MozDevices
 var currentProcess;
@@ -106,6 +109,21 @@ Logging.prototype.error = function(tag, message) {
  */
 Logging.prototype.clear = function() {
   debug('Clearing');
+
+  // There're two issues with |logcat -c| on Android L: 1) it does not clear the
+  // buffer, and 2) it stops current logcat from outputting messages. This is a
+  // workaround to take a timestamp and use it in next logcat call, i.e., next
+  // start() invocation so we don't run |logcat -c| here.
+  if (this.device.properties['ro.build.version.sdk'] >= 21) {
+    var logging = this;
+
+    return new Command()
+      .append(DATE_COMMAND)
+      .exec()
+      .then(function(output) {
+        logging.clearTimestamp = output;
+      });
+  }
   return this.adbShell('logcat -c');
 };
 
@@ -116,8 +134,7 @@ Logging.prototype.clear = function() {
  * @returns {Promise}
  */
 Logging.prototype.mark = function(name, time) {
-  var mark = util.format(
-    'Performance Entry: system.gaiamobile.org|mark|%s|0|0|%s', name, time);
+  var mark = util.format('system.gaiamobile.org|mark|%s|0|0|%s', name, time);
   return this.info('PerformanceTiming', mark);
 };
 
@@ -137,9 +154,9 @@ Logging.prototype.memory = function(pid, context) {
     .pipe('grep "' + pid + '"')
     .exec()
     .then(function(output) {
-      var parts = output
-        .substr(output.indexOf(pid) + pid.length + 1)
-        .split(/\s+/g);
+      var parts = output.split(/\s+/g);
+      var index = parts.indexOf(pid) + 1;
+      parts = parts.slice(index);
 
       logging.info('PerformanceMemory', context + '|uss|' + parts[3]);
       logging.info('PerformanceMemory', context + '|pss|' + parts[4]);
@@ -156,7 +173,7 @@ Logging.prototype.start = function() {
     return;
   }
 
-  var args = [];
+  var args = ['adb'];
   var device = this.device;
   var serial = this.serial;
   var env = process.env;
@@ -175,11 +192,25 @@ Logging.prototype.start = function() {
 
   args.push('logcat');
 
-  currentProcess = spawn('adb', args, {
+  // Apply current date or the timestamp we captured at clear() for logcat on
+  // Android L. See the comment in clear() for the reason of doing so.
+  if (device.properties['ro.build.version.sdk'] >= 21) {
+    if (this.clearTimestamp) {
+      args.push('-T');
+      args.push(this.clearTimestamp);
+    } else {
+      args.unshift('NOW=$(' + DATE_COMMAND + ');');
+      args.push('-T');
+      args.push('"$NOW"');
+    }
+  }
+
+  currentProcess = spawn('bash', ['-c', args.join(' ')], {
+    detached: true,
     env: env
   });
 
-  this.stream = currentStream = currentProcess.stdout;
+  this.stream = currentStream = byline(currentProcess.stdout);
 
   currentStream.on('data', function(data) {
     // Prevent a race condition for when we have removed the stream but have not
@@ -211,7 +242,7 @@ Logging.prototype.restart = function() {
 Logging.prototype.stop = function() {
   if (currentProcess) {
     debug('Stopping logging process');
-    currentProcess.kill('SIGINT');
+    process.kill(-currentProcess.pid, 'SIGINT');
     currentStream.removeAllListeners();
     currentProcess = null;
     currentStream = null;

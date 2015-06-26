@@ -26,6 +26,7 @@ require('/shared/js/contacts/utilities/templates.js');
 require('/shared/js/contacts/utilities/event_listeners.js');
 require('/shared/test/unit/mocks/mock_contact_all_fields.js');
 require('/shared/js/contacts/utilities/ice_store.js');
+requireApp('communications/contacts/services/contacts.js');
 requireApp('communications/contacts/js/views/list.js');
 requireApp('communications/contacts/test/unit/mock_cookie.js');
 requireApp('communications/contacts/test/unit/mock_asyncstorage.js');
@@ -315,7 +316,7 @@ suite('Render contacts list', function() {
     window.Contacts = MockContacts;
     realFb = window.fb;
     window.fb = Mockfb;
-    window.Contacts.extServices = MockExtFb;
+    window.ExtServices = MockExtFb;
     realImageLoader = window.ImageLoader;
     window.ImageLoader = MockImageLoader;
     realURL = window.URL || {};

@@ -2,7 +2,7 @@
 /* global ContactPhotoHelper */
 /* global ImageLoader */
 /* global LazyLoader */
-/* global Tagged */
+/* global Sanitizer */
 /* jshint nonew: false */
 
 var contacts = window.contacts || {};
@@ -59,7 +59,7 @@ if (!contacts.MatchingUI) {
 
       document.body.dataset.mode = type;
       var contactName = getDisplayName(contact);
-      var params = { name: Tagged.escapeHTML `${contactName}` };
+      var params = { name: Sanitizer.escapeHTML `${contactName}` };
 
       if (type === 'matching') {
         // "Suggested duplicate contacts for xxx"
@@ -83,7 +83,7 @@ if (!contacts.MatchingUI) {
     ];
 
     function templateDuplicateContact(contact) {
-      return Tagged.escapeHTML `<li data-uuid="${contact.id}"
+      return Sanitizer.escapeHTML `<li data-uuid="${contact.id}"
         class="block-item">
         <label class="pack-checkbox">
           <input type="checkbox" checked>
@@ -475,7 +475,7 @@ if (!contacts.MatchingUI) {
        *
        * @param{Object} Master contact
        *
-       * @param{Object} Hash of matching contacts from contacts.Matcher module
+       * @param{Object} Hash of matching contacts from Matcher module
        *
        * @param{Function} Success callback when the UI is ready
        *

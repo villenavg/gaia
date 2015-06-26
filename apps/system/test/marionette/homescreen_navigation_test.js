@@ -11,11 +11,15 @@ marionette('Homescreen navigation >', function() {
   var client = marionette.client({
     profile: {
       prefs: {
-        'devtools.debugger.forbid-certified-apps': false
+        'browser.safebrowsing.enabled': false,
+        'browser.safebrowsing.malware.enabled': false,
+        'devtools.debugger.forbid-certified-apps': false,
+        'privacy.trackingprotection.enabled': false
       },
       settings: {
         'devtools.overlay': true,
-        'hud.reflows': true
+        'hud.reflows': true,
+        'notifications.resend': false
       }
     }
   });

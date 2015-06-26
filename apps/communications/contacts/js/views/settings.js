@@ -16,6 +16,8 @@
 /* global SimDomGenerator */
 /* global utils */
 /* global VCFReader */
+/* global ContactsService */
+/* global ExtServices */
 
 var contacts = window.contacts || {};
 
@@ -173,7 +175,7 @@ contacts.Settings = (function() {
 
       fbUpdateButton = document.querySelector('#import-fb');
       fbOfflineMsg = document.querySelector('#no-connection');
-      fbUpdateButton.onclick = Contacts.extServices.importFB;
+      fbUpdateButton.onclick = ExtServices.importFB;
       fbTotalsMsg = document.querySelector('#fb-totals');
       fbPwdRenewMsg = document.querySelector('#renew-pwd-msg');
 
@@ -271,10 +273,10 @@ contacts.Settings = (function() {
         window.setTimeout(requireOverlay.bind(this, onSdImport), 0);
         break;
       case 'gmail':
-        Contacts.extServices.importGmail();
+        ExtServices.importGmail();
         break;
       case 'live':
-        Contacts.extServices.importLive();
+        ExtServices.importLive();
         break;
     }
   }
@@ -584,7 +586,7 @@ contacts.Settings = (function() {
   };
 
   var onFbImport = function onFbImportClick(evt) {
-    Contacts.extServices.importFB();
+    ExtServices.importFB();
   };
 
   var onFbEnable = function onFbEnable(evt) {
@@ -636,7 +638,7 @@ contacts.Settings = (function() {
             }
           };
 
-          Contacts.confirmDialog(null, msg, noObject, yesObject);
+          ConfirmDialog.show(null, msg, noObject, yesObject);
         }
       });
     }
@@ -773,7 +775,7 @@ contacts.Settings = (function() {
           });
         }
         if (!cancelled) {
-          Contacts.showStatus({
+          utils.status.show({
             id: 'simContacts-imported3',
             args: {
               n: importedContacts
@@ -818,7 +820,7 @@ contacts.Settings = (function() {
             onSimImport.bind(this, iccId)), 0);
         }
       };
-      Contacts.confirmDialog(null, 'simContacts-error', cancel, retry);
+      ConfirmDialog.show(null, 'simContacts-error', cancel, retry);
       resetWait(wakeLock);
     };
 
@@ -902,7 +904,7 @@ contacts.Settings = (function() {
                 }
               };
 
-              Contacts.showStatus(msg1, msg2);
+              utils.status.show(msg1, msg2);
 
               if (typeof cb === 'function') {
                 cb();
@@ -941,7 +943,7 @@ contacts.Settings = (function() {
           window.setTimeout(requireOverlay.bind(this, onSdImport), 0);
         }
       };
-      Contacts.confirmDialog(null, 'memoryCardContacts-error', cancel,
+      ConfirmDialog.show(null, 'memoryCardContacts-error', cancel,
         retry);
       resetWait(wakeLock);
       if (typeof cb === 'function') {
@@ -988,27 +990,28 @@ contacts.Settings = (function() {
 
   var checkNoContacts = function checkNoContacts() {
     var exportButton = exportContacts.firstElementChild;
-    var req = navigator.mozContacts.getCount();
-    req.onsuccess = function() {
-      if (req.result === 0) {
+
+    ContactsService.isEmpty(function(error, isEmpty) {
+      if (error) {
+        window.console.warn(
+          'Error while trying to know the contact number',
+          error
+        );
+        // In case of error is safer to leave enabled
+        exportButton.removeAttribute('disabled');
+        bulkDeleteButton.removeAttribute('disabled');
+        return;
+      }
+      if (isEmpty) {
         exportButton.setAttribute('disabled', 'disabled');
         bulkDeleteButton.setAttribute('disabled', 'disabled');
         setICEButton.setAttribute('disabled', 'disabled');
+      } else {
+        exportButton.removeAttribute('disabled');
+        bulkDeleteButton.removeAttribute('disabled');
+        setICEButton.removeAttribute('disabled');
       }
-      else {
-         exportButton.removeAttribute('disabled');
-         bulkDeleteButton.removeAttribute('disabled');
-         setICEButton.removeAttribute('disabled');
-      }
-    };
-
-    req.onerror = function() {
-      window.console.warn('Error while trying to know the contact number',
-                          req.error.name);
-      // In case of error is safer to leave enabled
-      exportButton.removeAttribute('disabled');
-      bulkDeleteButton.removeAttribute('disabled');
-    };
+    });
   };
 
   function saveStatus(data) {

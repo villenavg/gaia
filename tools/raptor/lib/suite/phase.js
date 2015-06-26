@@ -288,20 +288,13 @@ Phase.prototype.test = function() {
 };
 
 /**
- * There is a bug on the flame that causes it to stop responding to injected
- * touch events after a B2G restart. Swiping on the screen for some reason
- * jump-starts the responsiveness. Swipe with a downward motion on the
- * homescreen since we're at the top anyway and this won't move anywhere
+ * Input event will be ignored if the value equals to the kernel cached one.
+ * Initiate a reset to set cached values 0 after a B2G restart. Check bug
+ * 1168269 commment 22 for more information.
  * @returns {Promise}
  */
-Phase.prototype.swipeHack = function() {
-  var x = this.device.config.dimensions[0] / 2;
-  var startY = 250;
-  var endY = 350;
-  var steps = 10;
-  var duration = this.device.touchFrequency * steps;
-
-  return this.device.input.drag(x, startY, x, endY, steps, duration);
+Phase.prototype.resetInput = function() {
+  return this.device.input.reset();
 };
 
 /**
@@ -370,6 +363,10 @@ Phase.prototype.format = function(entries, suite, startMark) {
         entry.epoch - deviceAction.epoch : entry.duration;
     }
 
+    if (point.value < 0) {
+      return;
+    }
+
     point = merge(point, runner.getDeviceTags());
 
     if (!results[series]) {
@@ -388,47 +385,60 @@ Phase.prototype.format = function(entries, suite, startMark) {
  * Output aggregate statistical information for all suite runs to the console
  */
 Phase.prototype.logStats = function() {
+  var runner = this;
   var results = {};
-  var metrics = [];
 
   this.formattedRuns.forEach(function(run) {
     Object
       .keys(run)
       .forEach(function(key) {
-        if (!results[key]) {
-          results[key] = [];
+        var entry = run[key][0];
+        var contextResults = results[entry.context];
+
+        if (!contextResults) {
+          contextResults = results[entry.context] = {};
         }
 
-        var entry = run[key][0];
+        if (!contextResults[key]) {
+          contextResults[key] = [];
+        }
+
         var value = entry.value;
 
         if (entry.entryType === 'memory') {
           value = value / 1024 / 1024;
         }
 
-        results[key].push(value);
+        contextResults[key].push(value);
       });
   });
 
   Object
     .keys(results)
-    .forEach(function(key) {
-      var values = results[key];
-      var percentile = stats.percentile(values, 0.95);
+    .forEach(function(contextKey) {
+      var contextResults = results[contextKey];
+      var metrics = [];
 
-      metrics.push({
-        Metric: key,
-        Mean: stats.mean(values).toFixed(3),
-        Median: stats.median(values).toFixed(3),
-        Min: Math.min.apply(Math, values).toFixed(3),
-        Max: Math.max.apply(Math, values).toFixed(3),
-        StdDev: stats.stdev(values).toFixed(3),
-        p95: percentile ? percentile.toFixed(3) : 'n/a'
+      Object
+        .keys(contextResults)
+        .forEach(function(key) {
+          var values = contextResults[key];
+          var percentile = stats.percentile(values, 0.95);
+
+          metrics.push({
+            Metric: key,
+            Mean: stats.mean(values).toFixed(3),
+            Median: stats.median(values).toFixed(3),
+            Min: Math.min.apply(Math, values).toFixed(3),
+            Max: Math.max.apply(Math, values).toFixed(3),
+            StdDev: stats.stdev(values).toFixed(3),
+            p95: percentile ? percentile.toFixed(3) : 'n/a'
+          });
+        });
+
+        runner.log('Results from %s\n', contextKey);
+        console.table(metrics);
       });
-    });
-
-  console.log('');
-  console.table(metrics);
 };
 
 /**

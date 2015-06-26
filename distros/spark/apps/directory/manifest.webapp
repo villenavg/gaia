@@ -10,11 +10,26 @@
     "device-storage:apps": {
       "description": "For installing apps",
       "access": "readwrite"
+    },
+    "feature-detection": {
+      "description": "For dev mode perf"
+    },
+    "settings": {
+      "description": "For reading/writing achievements settings",
+      "access": "readwrite"
+    },
+    "desktop-notification": {
+      "description": "For sending achievements notifications to Gaia::System"
+    },
+    "systemXHR": {
+      "description": "For requesting the remote app list"
     }
   },
   "icons": {
-    "128": "/img/icons/hackerplace_icon_x1.5.png",
-    "200": "/img/icons/hackerplace_icon_x2.25.png"
+    "84": "/img/icons/directory_84.png",
+    "126": "/img/icons/directory_126.png",
+    "142": "/img/icons/directory_142.png",
+    "189": "/img/icons/directory_189.png"
   },
   "activities": {
     "install": {

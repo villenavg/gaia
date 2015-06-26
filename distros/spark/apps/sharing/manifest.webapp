@@ -42,11 +42,19 @@
     "browser": {},
     "desktop-notification": {
       "description": "For sending achievements notifications to Gaia::System"
+    },
+    "wifi-manage": {
+      "description": "To check if the device is connected to a network"
+    },
+    "feature-detection": {
+      "description": "For dev mode pref"
     }
   },
   "icons": {
-    "128": "/icons/P2P_sharing_icon_x1.5.png",
-    "200": "/icons/P2P_sharing_icon_x2.25.png"
+    "84": "/icons/sharing_84.png",
+    "126": "/icons/sharing_126.png",
+    "142": "/icons/sharing_142.png",
+    "189": "/icons/sharing_189.png"
   },
   "activities": {
     "share": {

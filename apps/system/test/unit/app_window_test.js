@@ -1499,6 +1499,7 @@ suite('system/AppWindow', function() {
 
       var stubApp2SetVisible = this.sinon.stub(app2, 'setVisible');
       app1.frontWindow = app2;
+      this.sinon.stub(app2, 'isActive').returns(true);
       app2.rearWindow = app1;
 
       app1.setVisible(true);
@@ -1506,6 +1507,19 @@ suite('system/AppWindow', function() {
 
       app1.setVisible(false);
       assert.isTrue(stubApp2SetVisible.calledWith(false));
+    });
+
+    test('doNotPropagate', function() {
+      var app1 = new AppWindow(fakeAppConfig1);
+      var app2 = new AppWindow(fakeAppConfig2);
+      app1.setVisible(false);
+
+      this.sinon.stub(app2, 'setVisible');
+      app1.frontWindow = app2;
+      this.sinon.stub(app2, 'isActive').returns(true);
+      app2.rearWindow = app1;
+      app1.setVisible(true, true);
+      assert.isFalse(app2.setVisible.called);
     });
 
     test('setVisible: homescreen', function() {
@@ -2958,6 +2972,84 @@ suite('system/AppWindow', function() {
       });
 
       assert.equal(app1.themeColor, '');
+      assert.isTrue(stubPublish.calledOnce);
+    });
+  });
+
+  suite('Theme Group', function() {
+    test('Added', function() {
+      var app1 = new AppWindow(fakeAppConfig1);
+      var stubPublish = this.sinon.stub(app1, 'publish');
+
+      app1.handleEvent({
+        type: 'mozbrowsermetachange',
+        detail: {
+          name: 'theme-group',
+          content: 'theme-media',
+          type: 'added'
+        }
+      });
+
+      assert.isTrue(app1.element.classList.contains('theme-media'));
+      assert.isTrue(stubPublish.calledOnce);
+    });
+
+    test('Sanitazation', function() {
+      var app1 = new AppWindow(fakeAppConfig1);
+
+      app1.handleEvent({
+        type: 'mozbrowsermetachange',
+        detail: {
+          name: 'theme-group',
+          content: 'hidden',
+          type: 'added'
+        }
+      });
+
+      assert.isFalse(app1.element.classList.contains('hidden'));
+    });
+
+    test('Changed', function() {
+      var app1 = new AppWindow(fakeAppConfig1);
+      var stubPublish = this.sinon.stub(app1, 'publish');
+
+      app1.handleEvent({
+        type: 'mozbrowsermetachange',
+        detail: {
+          name: 'theme-group',
+          content: 'theme-settings',
+          type: 'changed'
+        }
+      });
+
+      assert.isTrue(app1.element.classList.contains('theme-settings'));
+      assert.isTrue(stubPublish.calledOnce);
+    });
+
+    test('Removed', function() {
+      var app1 = new AppWindow(fakeAppConfig1);
+
+      app1.handleEvent({
+        type: 'mozbrowsermetachange',
+        detail: {
+          name: 'theme-group',
+          content: 'theme-media',
+          type: 'added'
+        }
+      });
+
+      var stubPublish = this.sinon.stub(app1, 'publish');
+
+      app1.handleEvent({
+        type: 'mozbrowsermetachange',
+        detail: {
+          name: 'theme-group',
+          content: 'theme-media',
+          type: 'removed'
+        }
+      });
+
+      assert.isFalse(app1.element.classList.contains('theme-media'));
       assert.isTrue(stubPublish.calledOnce);
     });
   });

@@ -17,7 +17,10 @@
 /* global TAG_OPTIONS */
 /* global utils */
 /* global VcardFilename */
+/* global ExtServices */
 /* global WebrtcClient */
+/* global MainNavigation */
+/* global ContactsService */
 
 var contacts = window.contacts || {};
 
@@ -118,12 +121,12 @@ contacts.Details = (function() {
 
     if (ActivityHandler.currentActivityIsNot(['import'])) {
       ActivityHandler.postCancel();
-      Contacts.navigation.home();
+      MainNavigation.home();
     }
     else if (contacts.ICEView && contacts.ICEView.iceListDisplayed) {
       ICEData.getActiveIceContacts().then(function(list) {
         if (!Array.isArray(list) || list.length === 0) {
-          Contacts.navigation.home();
+          MainNavigation.home();
         }
         else {
           doHandleDetailsBack();
@@ -145,7 +148,7 @@ contacts.Details = (function() {
       var message = { 'type': 'contactsiframe', 'message': 'back' };
       window.parent.postMessage(message, COMMS_APP_ORIGIN);
     } else {
-      Contacts.navigation.back(resetPhoto);
+      MainNavigation.back(resetPhoto);
     }
   };
 
@@ -343,34 +346,39 @@ contacts.Details = (function() {
     favoriteMessage.style.pointerEvents = 'none';
 
     var promise = new Promise(function(resolve, reject) {
-      var request =
-        navigator.mozContacts.save(utils.misc.toMozContact(contact));
-      request.onsuccess = function onsuccess() {
-        isAFavoriteChange = true;
-        var cList = contacts.List;
-        /*
-           Two contacts are returned because the enrichedContact is readonly
-           and if the Contact is edited we need to prevent saving
-           FB data on the mozContacts DB.
-        */
-         cList.getContactById(contact.id,
-                             function onSuccess(savedContact, enrichedContact) {
-          renderFavorite(savedContact);
-          setContact(savedContact);
-          favoriteMessage.style.pointerEvents = 'auto';
-        }, function onError() {
-          console.error('Error reloading contact');
-          favoriteMessage.style.pointerEvents = 'auto';
-        });
-        resolve(isAFavoriteChange);
-      };
+      ContactsService.save(
+        utils.misc.toMozContact(contact),
+        function(e) {
+          if (e) {
+            favoriteMessage.style.pointerEvents = 'auto';
+            console.error('Error saving favorite');
+            reject('Error saving favorite');
+            resolve(false);
+            return;
+          }
 
-      request.onerror = function onerror() {
-        favoriteMessage.style.pointerEvents = 'auto';
-        console.error('Error saving favorite');
-        reject('Error saving favorite');
-        resolve(false);
-      };
+          isAFavoriteChange = true;
+          /*
+             Two contacts are returned because the enrichedContact is readonly
+             and if the Contact is edited we need to prevent saving
+             FB data on the mozContacts DB.
+          */
+
+          ContactsService.get(
+            contact.id,
+            function onSuccess(savedContact, enrichedContact) {
+              renderFavorite(savedContact);
+              setContact(savedContact);
+              favoriteMessage.style.pointerEvents = 'auto';
+            },
+            function onError() {
+              console.error('Error reloading contact');
+              favoriteMessage.style.pointerEvents = 'auto';
+            }
+          );
+          resolve(isAFavoriteChange);
+        }
+      );
     }).then();
 
     return promise;
@@ -465,7 +473,7 @@ contacts.Details = (function() {
       linkButton.classList.add('hide');
     }
 
-    Contacts.extServices.initEventHandlers(social, contact, linked);
+    ExtServices.initEventHandlers(social, contact, linked);
 
     listContainer.appendChild(social);
   };
@@ -498,36 +506,41 @@ contacts.Details = (function() {
     if (!contact.adr) {
       return;
     }
-    for (var i = 0; i < contact.adr.length; i++) {
-      var currentAddress = contact.adr[i];
-      // Sanity check
-      if (Contacts.isEmpty(currentAddress, ['streetAddress', 'postalCode',
-        'locality', 'countryName'])) {
-        continue;
-      }
-      var address = currentAddress.streetAddress || '';
-      var escapedStreet = Normalizer.escapeHTML(address, true);
-      var locality = currentAddress.locality;
-      var escapedLocality = Normalizer.escapeHTML(locality, true);
-      var escapedType = Normalizer.escapeHTML(currentAddress.type, true);
-      var country = currentAddress.countryName || '';
-      var escapedCountry = Normalizer.escapeHTML(country, true);
-      var postalCode = currentAddress.postalCode || '';
-      var escapedPostalCode = Normalizer.escapeHTML(postalCode, true);
+    // Load what we need
+    LazyLoader.load('/contacts/js/utilities/mozContact.js', function() {
+      for (var i = 0; i < contact.adr.length; i++) {
+        var currentAddress = contact.adr[i];
+        // Sanity check
+        if (utils.mozContact.haveEmptyFields(currentAddress,
+            ['streetAddress', 'postalCode', 'locality', 'countryName'])) {
+          continue;
+        }
+        var address = currentAddress.streetAddress || '';
+        var escapedStreet = Normalizer.escapeHTML(address, true);
+        var locality = currentAddress.locality;
+        var escapedLocality = Normalizer.escapeHTML(locality, true);
+        var escapedType = Normalizer.escapeHTML(currentAddress.type, true);
+        var country = currentAddress.countryName || '';
+        var escapedCountry = Normalizer.escapeHTML(country, true);
+        var postalCode = currentAddress.postalCode || '';
+        var escapedPostalCode = Normalizer.escapeHTML(postalCode, true);
 
-      var addressField = {
-        streetAddress: escapedStreet,
-        postalCode: escapedPostalCode,
-        locality: escapedLocality || '',
-        countryName: escapedCountry,
-        type: _(escapedType) || escapedType ||
-                                        TAG_OPTIONS['address-type'][0].value,
-        'type_l10n_id': currentAddress.type,
-        i: i
-      };
-      var template = utils.templates.render(addressesTemplate, addressField);
-      listContainer.appendChild(template);
-    }
+        var addressField = {
+          streetAddress: escapedStreet,
+          postalCode: escapedPostalCode,
+          locality: escapedLocality || '',
+          countryName: escapedCountry,
+          type: _(escapedType) || escapedType ||
+                                          TAG_OPTIONS['address-type'][0].value,
+          'type_l10n_id': currentAddress.type,
+          i: i
+        };
+        var template = utils.templates.render(addressesTemplate, addressField);
+        listContainer.appendChild(template);
+      }
+    });
+
+
   };
 
   var renderDuplicate = function cd_renderDuplicate(contact) {
@@ -539,7 +552,7 @@ contacts.Details = (function() {
       // Only have this active if contact list has more than one entry
       findMergeButton.disabled = false;
       findMergeButton.addEventListener('click', function finding() {
-        Contacts.extServices.match(contact.id);
+        ExtServices.match(contact.id);
       });
     }
 
@@ -603,14 +616,14 @@ contacts.Details = (function() {
     if (photo) {
       var currentHash = cover.dataset.imgHash;
       if (!currentHash) {
-        Contacts.updatePhoto(photo, cover);
+        utils.dom.updatePhoto(photo, cover);
         updateHash(photo, cover);
       }
       else {
         // Need to recalculate the hash and see whether the images changed
         calculateHash(photo, function(newHash) {
           if (currentHash !== newHash) {
-            Contacts.updatePhoto(photo, cover);
+            utils.dom.updatePhoto(photo, cover);
             cover.dataset.imgHash = newHash;
           }
           else {

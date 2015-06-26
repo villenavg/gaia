@@ -14,7 +14,7 @@ require('/shared/test/unit/mocks/dialer/mock_contacts.js');
 require('/shared/test/unit/mocks/dialer/mock_keypad.js');
 require('/shared/test/unit/mocks/mock_sim_settings_helper.js');
 require('/shared/test/unit/mocks/mock_l10n.js');
-require('/shared/js/tagged.js');
+require('/shared/js/sanitizer.js');
 
 require('/dialer/js/suggestion_bar.js');
 
@@ -117,23 +117,22 @@ suite('suggestion Bar', function() {
     MockNavigatorMozIccManager.addIcc(0, {});
 
     loadBodyHTML('/shared/elements/contacts/contact_in_overlay.html');
-    var suggestionItemTemplate =
-      document.body.querySelector('template').innerHTML;
+    var suggestionItemTemplate = document.body.querySelector('template');
 
     loadBodyHTML('/shared/elements/contacts/contact_list_overlay.html');
-    var suggestionOverlayTemplate =
-      document.body.querySelector('template').innerHTML;
+    var suggestionOverlayTemplate = document.body.querySelector('template');
 
     domSuggestionBar = document.createElement('section');
     domSuggestionBar.id = 'suggestion-bar';
     domSuggestionBar.classList.add('hide');
     domSuggestionBar.innerHTML =
-      '<div id="suggestion-count" class="more"></div>' +
-      '<div is="contact-in-overlay" ' +
-        'class="js-suggestion-item contact-item"></div>';
+      `<div id="suggestion-count" class="more"></div>
+       <div is="contact-in-overlay"
+         class="js-suggestion-item contact-item"></div>`;
     document.body.appendChild(domSuggestionBar);
-    document.querySelector('.js-suggestion-item').innerHTML =
-      suggestionItemTemplate;
+    var suggestionItem = document.querySelector('.js-suggestion-item');
+    suggestionItem.innerHTML = '';
+    suggestionItem.appendChild(suggestionItemTemplate.content.cloneNode(true));
 
     var domSuggestionItem = document.createElement('button');
     domSuggestionItem.id = 'contact-in-overlay-template';
@@ -143,7 +142,9 @@ suite('suggestion Bar', function() {
       'bb-button');
     domSuggestionItem.hidden = true;
     document.body.appendChild(domSuggestionItem);
-    domSuggestionItem.innerHTML = suggestionItemTemplate;
+    domSuggestionItem.innerHTML = '';
+    domSuggestionItem.appendChild(
+      suggestionItemTemplate.content.cloneNode(true));
 
     domOverlay = document.createElement('form');
     domOverlay.id = 'contact-list-overlay';
@@ -152,7 +153,8 @@ suite('suggestion Bar', function() {
     domOverlay.dataset.type = 'action';
     domOverlay.classList.add('overlay');
     domOverlay.setAttribute('aria-hidden', 'true');
-    domOverlay.innerHTML = suggestionOverlayTemplate;
+    domOverlay.innerHTML = '';
+    domOverlay.appendChild(suggestionOverlayTemplate.content.cloneNode(true));
     document.body.appendChild(domOverlay);
 
     domSuggestionCount = domSuggestionBar.querySelector('#suggestion-count');

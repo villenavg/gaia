@@ -3,7 +3,8 @@
   <head>
     <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1">
     <meta charset="utf-8">
-    <meta name="theme-color" content="#00b7b7">
+    <meta name="theme-group" content="theme-communications">
+    <meta name="theme-color" content="var(--header-background)">
     <title>Dialer</title>
 
     <!-- Localization -->
@@ -101,7 +102,7 @@
     <script defer src="/shared/js/text_normalizer.js"></script>
     <script defer src="/shared/js/contacts/utilities/templates.js"></script>
     <script defer src="/shared/js/contacts/sms_integration.js"></script>
-    <script defer src="/shared/js/tagged.js"></script>
+    <script defer src="/shared/js/sanitizer.js"></script>
     -->
 
     <link rel="import" href="elements/edit-mode.html">
@@ -120,9 +121,7 @@
           <section role="region">
             <gaia-header>
               <h1 data-l10n-id="callLog"></h1>
-              <button id="call-log-icon-edit" data-icon="edit" disabled>
-                <span data-l10n-id="callLogEdit" aria-disabled="true"></span>
-              </button>
+              <button id="call-log-icon-edit" data-icon="edit" disabled data-l10n-id="callLogEditButton"></button>
             </gaia-header>
             <nav id="call-log-filter" class="recents-filter-container">
               <ul role="tablist" class="bb-tablist" data-type="filter" aria-controls="call-log-container">

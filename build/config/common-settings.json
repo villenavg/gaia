@@ -1,6 +1,25 @@
 {
    "accessibility.invert": false,
    "accessibility.screenreader": false,
+   "achievements": [{
+     "issuer": "fxos-customizer",
+     "criteria": "achievements/customize-champ"
+   }, {
+     "issuer": "fxos-customizer",
+     "criteria": "achievements/add-on-all-star"
+   }, {
+     "issuer": "fxos-directory",
+     "criteria": "achievements/fab-finder"
+   }, {
+     "issuer": "fxos-directory",
+     "criteria": "achievements/content-commander"
+   }, {
+     "issuer": "fxos-sharing",
+     "criteria": "achievements/sharing-is-caring"
+   }, {
+     "issuer": "Studio",
+     "criteria": "achievements/creative-kind"
+   }],
    "alarm.enabled": false,
    "app-transition.enabled": true,
    "app.cards_view.screenshots.enabled": true,

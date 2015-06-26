@@ -83,6 +83,7 @@ function createListElement(option, data, index, highlight) {
         var shuffleIcon = document.createElement('div');
         shuffleIcon.className = 'list-playlist-icon';
         shuffleIcon.dataset.icon = 'shuffle';
+        shuffleIcon.setAttribute('data-l10n-id', 'shuffle-toggle');
         a.appendChild(shuffleIcon);
       }
 
@@ -100,7 +101,7 @@ function createListElement(option, data, index, highlight) {
 
       LazyLoader.load('js/metadata/album_art_cache.js', function() {
         AlbumArtCache.getThumbnailURL(data).then(function(url) {
-          showImage(albumImg, url, 'fadeIn');
+          showImage(albumImg, url);
         });
       });
 

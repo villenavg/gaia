@@ -13,6 +13,7 @@
 /* global MockNavigatorMozMobileConnections */
 /* global MockNavigatorSettings */
 /* global MockSdCard */
+/* global ConfirmDialog */
 /* global utils */
 
 require('/shared/js/lazy_loader.js');
@@ -21,6 +22,8 @@ require('/shared/js/contacts/utilities/event_listeners.js');
 require('/shared/test/unit/mocks/mock_navigator_moz_settings.js');
 require('/shared/test/unit/mocks/mock_navigator_moz_mobile_connections.js');
 require('/shared/test/unit/mocks/mock_iccmanager.js');
+requireApp('communications/contacts/services/contacts.js');
+requireApp('communications/contacts/test/unit/mock_service_extensions.js');
 requireApp('communications/contacts/test/unit/mock_cache.js');
 requireApp('communications/contacts/test/unit/mock_contacts_index.html.js');
 requireApp('communications/contacts/test/unit/mock_navigation.js');
@@ -73,6 +76,7 @@ if (!window.realMozIccManager) {
 }
 
 var mocksHelperForContactSettings = new MocksHelper([
+  'ExtServices',
   'asyncStorage',
   'Cache',
   'ConfirmDialog',
@@ -610,7 +614,7 @@ suite('Contacts settings >', function() {
     suiteSetup(function(done) {
       mockFbUtils = fb.utils;
       require('/shared/js/contacts/import/facebook/fb_utils.js', function() {
-        sinon.stub(Contacts, 'confirmDialog', function(attr, msg, no, yes) {
+        sinon.stub(ConfirmDialog, 'show', function(attr, msg, no, yes) {
           yes.callback();
         });
 
@@ -657,7 +661,7 @@ suite('Contacts settings >', function() {
 
     suiteTeardown(function() {
       fb.utils = mockFbUtils;
-      Contacts.confirmDialog.restore();
+      ConfirmDialog.show.restore();
       Contacts.utility.restore();
       window.addEventListener.restore();
       Contacts.showOverlay.restore();

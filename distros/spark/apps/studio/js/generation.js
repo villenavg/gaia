@@ -41,7 +41,7 @@
     });
   }
 
-  function importBlob(blob) {
+  function importBlob(blob, enable) {
     console.log('importBlob');
     if (!navigator.getDeviceStorage) {
       return Promise.reject(new Error('getDeviceStorage is unavailable.'));
@@ -70,10 +70,14 @@
             var file = this.result;
             navigator.mozApps.mgmt.import(file).then(
               function(app) {
-                var setting = { "theme.selected" : app.manifestURL };
-                var req = navigator.mozSettings.createLock().set(setting);
-                req.onsuccess = resolve.bind(null, app.manifestURL);
-                req.onerror = sendError;
+                if (enable) {
+                  var setting = { 'theme.selected' : app.manifestURL };
+                  var req = navigator.mozSettings.createLock().set(setting);
+                  req.onsuccess = resolve.bind(null, app.manifestURL);
+                  req.onerror = sendError;
+                } else {
+                  resolve(app.manifestURL);
+                }
               },
               function(error) { sendError('Error importing: ' + error.name); }
             );
@@ -89,7 +93,7 @@
     });
   }
 
-  function exportTheme(theme) {
+  function exportTheme(enable, theme) {
     // Worker path configuration.
     zip.workerScriptsPath = './js/libs/';
 
@@ -129,29 +133,37 @@
       }
 
       function addWallpaper(blob) {
-        var type = MimeMapper.guessExtensionFromType(blob.type);
-        if (!type) {
-          throw new Error('Unrecognized type: ' + blob.type);
+        // if we don't have a (valid) wallpaper we still want an empty JSON
+        var wallpaperFile = null;
+        var wallpaper = { homescreen: null };
+        if (blob) {
+          var type = MimeMapper.guessExtensionFromType(blob.type);
+          if (type) {
+            wallpaperFile = 'wallpaper.' + type;
+            wallpaper.homescreen = '/' + wallpaperFile;
+          } else {
+            console.error('Unrecognized type: ' + blob.type);
+          }
         }
-
-        var wallpaperFile = 'wallpaper.' + type;
-        var wallpaperJSON = JSON.stringify(
-          { homescreen: '/' + wallpaperFile }
-        );
 
         // We can't use Promise.all to add both files because it corrupts the
         // zip
         return Promise.resolve()
-          .then(() => inner.addResource('wallpaper.json', wallpaperJSON))
-          .then(() => inner.addResource(wallpaperFile, blob));
+          .then(() => inner.addResource(
+            'wallpaper.json', JSON.stringify(wallpaper)))
+          .then(function() {
+            if (wallpaperFile) {
+              inner.addResource(wallpaperFile, blob);
+            }
+          });
       }
 
       var zipPromise = addManifest().then(addCSS);
-      var image;
+      var image = null;
       if (theme.autotheme) {
         image = theme.autotheme.image;
-        zipPromise = zipPromise.then(() => addWallpaper(image));
       }
+      zipPromise = zipPromise.then(() => addWallpaper(image));
 
       return zipPromise.then(inner.asBlob.bind(inner))
         .then((packageBlob) => {
@@ -160,7 +172,7 @@
         }).then((appBlob) => {
           return uninstallIfNeeded(theme)
             .then(() => {
-              return importBlob(appBlob);
+              return importBlob(appBlob, enable);
             })
             .then((manifestURL) => {
               theme.manifestURL = manifestURL;
@@ -173,7 +185,9 @@
             ))
             .catch((e) => {
               console.error('Error while importing blob', e);
-              proposeDownload(appBlob);
+              // Desktop debug
+              // proposeDownload(appBlob);
+              alert('This device is not theming compatible');
             });
         });
     });
@@ -211,10 +225,34 @@
     document.body.appendChild(override);
   }
 
+  function checkIfSelected(theme) {
+    return new Promise((resolve, reject) => {
+      var req = navigator.mozSettings.createLock().get('theme.selected');
+      req.onsuccess = function(e) {
+        resolve([(req.result['theme.selected'] == theme.manifestURL), theme]);
+      };
+      req.onerror = reject;
+    });
+  }
+
   exports.Generation = {
-    installTheme: function(id) {
-      return Storage.fetchTheme(id).then(exportTheme);
+    installTheme: function(id, enable) {
+      return Storage.fetchTheme(id)
+      .then(checkIfSelected)
+      .then((results) => {
+        return exportTheme(results[0] || enable, results[1]);
+      });
     },
-    uninstallIfNeeded: uninstallIfNeeded
+    uninstallIfNeeded: function(theme) {
+      return checkIfSelected(theme)
+      .then((results) => {
+        var selected = results[0];
+        if (selected) {
+          alert("You can't remove the selected theme");
+        } else {
+          return uninstallIfNeeded(theme);
+        }
+      });
+    }
   };
 })(window);

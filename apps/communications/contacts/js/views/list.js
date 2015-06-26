@@ -12,6 +12,7 @@
 /* global monitorTagVisibility */
 /* global Normalizer */
 /* global utils */
+/* global ContactsService */
 
 var contacts = window.contacts || {};
 contacts.List = (function() {
@@ -682,6 +683,7 @@ contacts.List = (function() {
 
       var newNodes = appendToLists(chunk[i]);
       nodes.push.apply(nodes, newNodes);
+    }
 
       if (i === 0) {
         utils.PerformanceHelper.list.firstContactRenderedMark();
@@ -1288,7 +1290,7 @@ contacts.List = (function() {
       }
     };
 
-    Contacts.confirmDialog(null, msg, noObject);
+    ConfirmDialog.show(null, msg, noObject);
   };
 
   var getContactsByGroup = function gCtByGroup(errorCb, contacts) {
@@ -1309,40 +1311,6 @@ contacts.List = (function() {
     });
   };
 
-  var getContactById = function(contactID, successCb, errorCb) {
-    if (!contactID) {
-      successCb();
-      return;
-    }
-
-    var options = {
-      filterBy: ['id'],
-      filterOp: 'equals',
-      filterValue: contactID
-    };
-    var request = navigator.mozContacts.find(options);
-
-    request.onsuccess = function findCallback(e) {
-      var result = e.target.result[0];
-
-      if (!fb.isFbContact(result)) {
-        successCb(result);
-        return;
-      }
-
-      var fbContact = new fb.Contact(result);
-      var fbReq = fbContact.getData();
-      fbReq.onsuccess = function() {
-        successCb(result, fbReq.result);
-      };
-      fbReq.onerror = successCb.bind(null, result);
-    }; // request.onsuccess
-
-    if (typeof errorCb === 'function') {
-      request.onerror = errorCb;
-    }
-  };
-
   var getAllContacts = function cl_getAllContacts(errorCb, successCb) {
     if (Cache.active) {
       headers = Cache.headers;
@@ -1350,30 +1318,17 @@ contacts.List = (function() {
       iceGroup.addEventListener('click', onICEGroupClicked);
     }
     loading = true;
-    initConfiguration(function onInitConfiguration() {
-      var sortBy = (orderByLastName === true ? 'familyName' : 'givenName');
-      var options = {
-        sortBy: sortBy,
-        sortOrder: 'ascending'
-      };
 
-      var cursor = navigator.mozContacts.getAll(options);
-      var successCb = successCb || loadChunk;
+    if (!successCb) {
+      successCb = loadChunk;
+    }
+    initConfiguration(function onInitConfiguration() {
       var num = 0;
       var chunk = [];
 
-      cursor.onsuccess = function onsuccess(evt) {
-        // Cancel this load operation if requested
-        if (cancelLoadCB) {
-          // XXX: If bug 870125 is ever implemented, add a cancel/stop call
-          loading = false;
-          var cb = cancelLoadCB;
-          cancelLoadCB = null;
-          return cb();
-        }
-
-        var contact = evt.target.result;
-        if (contact) {
+      ContactsService.getAllStreamed(
+        (orderByLastName === true ? 'familyName' : 'givenName'),
+        function onContact(contact) {
           chunk.push(contact);
           if (num && (num % CHUNK_SIZE === 0)) {
             successCb(chunk);
@@ -1382,8 +1337,9 @@ contacts.List = (function() {
             chunk = [];
           }
           num++;
-          cursor.continue();
-        } else {
+        },
+        errorCb,
+        function onComplete() {
           if (chunk.length) {
             successCb(chunk);
           }
@@ -1395,8 +1351,7 @@ contacts.List = (function() {
           dispatchCustomEvent('listRendered');
           loading = false;
         }
-      };
-      cursor.onerror = errorCb;
+      );
     });
   };
 
@@ -1649,7 +1604,7 @@ contacts.List = (function() {
      '/contacts/js/fb/fb_init.js',
      '/contacts/js/fb_loader.js'
     ], () => {
-      getContactById(idOrContact, function(contact, fbData) {
+      ContactsService.get(idOrContact, function(contact, fbData) {
         var enrichedContact = null;
         if (fb.isFbContact(contact)) {
           var fbContact = new fb.Contact(contact);
@@ -1898,23 +1853,23 @@ contacts.List = (function() {
             }
           }
           var notSelectedCount = Object.keys(notSelectedIds).length;
-          var request = navigator.mozContacts.find({});
-          request.onsuccess = function onAllContacts() {
-            request.result.forEach(function onContact(contact) {
+
+          ContactsService.getAll(function(e, contacts) {
+            if (e) {
+              self.reject();
+              return;
+            }
+            contacts.forEach(function onContact(contact) {
               if (notSelectedCount === 0 ||
                 notSelectedIds[contact.id] === undefined) {
                 self._selected.push(contact.id);
               }
             });
-
             self.resolved = true;
             if (self.successCb) {
               self.successCb(self._selected);
             }
-          };
-          request.onerror = function onError() {
-            self.reject();
-          };
+          });
         }, 0);
       },
       reject: function reject() {
@@ -2450,7 +2405,6 @@ contacts.List = (function() {
     'load': load,
     'refresh': refresh,
     'refreshFb': refreshFb,
-    'getContactById': getContactById,
     'getAllContacts': getAllContacts,
     'handleClick': handleClick,
     'hide': hide,

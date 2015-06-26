@@ -5,9 +5,11 @@
          SMIL, ErrorDialog, MessageManager, LinkHelper,
          ActivityPicker, InboxView, OptionMenu, Threads, Contacts,
          Attachment, WaitingScreen, MozActivity, LinkActionHandler,
-         ActivityHandler, TimeHeaders, ContactRenderer, Draft, Drafts,
+         TimeHeaders, ContactRenderer, Draft, Drafts,
          MultiSimActionButton, Navigation, Promise, LazyLoader,
+         App,
          SharedComponents,
+         ActivityClient,
          Errors,
          EventDispatcher,
          SelectionHandler,
@@ -302,7 +304,7 @@ var ConversationView = {
    * @private
    */
   backOrClose: function conv_backOrClose() {
-    var inActivity = ActivityHandler.isInActivity();
+    var inActivity = ActivityClient.hasPendingRequest();
     var isComposer = Navigation.isCurrentPanel('composer');
     var isThread = Navigation.isCurrentPanel('thread');
     var action = inActivity && (isComposer || isThread) ? 'close' : 'back';
@@ -477,9 +479,8 @@ var ConversationView = {
    */
   beforeEnter: function conv_beforeEnter(args) {
     this.clearConvertNoticeBanners();
-    this.setHeaderAction(ActivityHandler.isInActivity() ? 'close' : 'back');
+    this.setHeaderAction(ActivityClient.hasPendingRequest() ? 'close' : 'back');
 
-    Recipients.View.isFocusable = true;
     if (!this.multiSimActionButton) {
       // handles the various actions on the send button and encapsulates the
       // DSDS specific behavior
@@ -562,6 +563,8 @@ var ConversationView = {
       this.recipients.focus();
     }
 
+    this.emit('visually-loaded');
+
     // not strictly necessary but better for consistency
     return Promise.resolve();
   },
@@ -587,9 +590,9 @@ var ConversationView = {
       });
     }
 
-    // Let's mark thread only when thread list is fully rendered and target node
+    // Let's mark thread only when inbox is fully rendered and target node
     // is in the DOM tree.
-    InboxView.whenReady().then(function() {
+    App.whenReady().then(function() {
       // We use setTimeout (macrotask) here to allow reflow happen as soon as
       // possible and to not interrupt it with non-critical task since Promise
       // callback only (microtask) won't help here.
@@ -737,6 +740,8 @@ var ConversationView = {
   },
 
   beforeEnterComposer: function conv_beforeEnterComposer(args) {
+    Recipients.View.isFocusable = true;
+
     this.enableConvertNoticeBanners();
 
     // TODO add the activity/forward/draft stuff here
@@ -1084,7 +1089,7 @@ var ConversationView = {
   close: function conv_close() {
     return this._onNavigatingBack().then(() => {
       this.cleanFields();
-      ActivityHandler.leaveActivity();
+      return ActivityClient.postResult();
     }).catch(function(e) {
       // If we don't have any error that means that action was rejected
       // intentionally and there is nothing critical to report about.
@@ -1461,6 +1466,8 @@ var ConversationView = {
     TimeHeaders.updateAll('header[data-time-update]');
     // Go to Bottom
     this.scrollViewToBottom();
+
+    this.emit('visually-loaded');
   },
 
   createMmsContent: function conv_createMmsContent(dataArray) {
@@ -1848,7 +1855,7 @@ var ConversationView = {
     }
 
     if (!this.selectionHandler) {
-      LazyLoader.load('views/shared/js/selection_handler.js', () => {
+      LazyLoader.load('/views/shared/js/selection_handler.js', () => {
         this.selectionHandler = new SelectionHandler({
           // Elements
           container: this.container,
@@ -2264,7 +2271,7 @@ var ConversationView = {
       if (recipients.length > 1) {
         this.shouldChangePanelNextEvent = false;
         Navigation.toPanel('thread-list');
-        if (ActivityHandler.isInActivity()) {
+        if (ActivityClient.hasPendingRequest()) {
           setTimeout(this.close.bind(this), this.LEAVE_ACTIVITY_DELAY);
         }
 
@@ -2879,7 +2886,7 @@ var ConversationView = {
       );
     }
 
-    if (opt.contactId && !ActivityHandler.isInActivity()) {
+    if (opt.contactId && !ActivityClient.hasPendingRequest()) {
         params.items.push({
           l10nId: 'viewContact',
           method: () => ActivityPicker.viewContact({ id: opt.contactId })
@@ -3014,7 +3021,7 @@ Object.defineProperty(exports, 'ConversationView', {
   get: function () {
     delete exports.ConversationView;
 
-    var allowedEvents = ['recipientschange'];
+    var allowedEvents = ['recipientschange', 'visually-loaded'];
     return (exports.ConversationView =
       EventDispatcher.mixin(ConversationView, allowedEvents));
   },

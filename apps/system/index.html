@@ -147,7 +147,7 @@
      <script defer src="shared/js/screen_layout.js"></script>
      <script defer src="shared/js/mobile_operator.js"></script>
      <script defer src="shared/js/utilities.js"></script>
-     <script defer src="shared/js/tagged.js"></script>
+     <script defer src="shared/js/sanitizer.js"></script>
      <script defer src="shared/js/settings_url.js"></script>
      <script defer src="shared/js/version_helper.js"></script>
      <script defer src="shared/js/telemetry.js"></script>
@@ -165,7 +165,6 @@
      <script defer src="/shared/js/advanced_timer.js">
      <script defer src="/shared/js/iac_handler.js">
      <script defer src="/shared/js/apn_helper.js">
-     <script defer src="/shared/js/tagged.js">
      <script defer src="/shared/js/input_mgmt/input_app_list.js">
      <script defer src="/shared/js/keyboard_helper.js">
      <script defer src="/shared/js/bookmarks_database.js">
@@ -184,6 +183,7 @@
      <script defer src="shared/js/input_parser.js"></script>
      <script defer src="shared/js/lockscreen_slide.js"></script>
      <script defer src="shared/js/lockscreen_connection_info_manager.js"></script>
+     <script defer src="shared/js/achievements-service.js"></script>
     -->
   </head>
 
@@ -225,7 +225,7 @@
             <div id="statusbar-tray">
             </div>
             <div id="notification-bar" class="fake-notification">
-              <div data-icon="notifications"></div>
+              <div data-icon="notifications" aria-hidden="true"></div>
               <div class="title-container">
                 <div id="notification-some" class="title" data-l10n-id="statusbarNotifications" data-l10n-args='{"n": "0"}'></div>
                 <button id="notification-clear" data-l10n-id="clear-all" disabled></button>
@@ -237,19 +237,19 @@
               <div id="attention-window-notifications-container"></div>
               <!-- Update Manager -->
               <div id="update-manager-container" class="fake-notification" role="link">
-                <div data-icon="download-circle"></div>
+                <div data-icon="download-circle" aria-hidden="true"></div>
                 <div class="title-container"></div>
                 <progress></progress>
               </div>
               <!-- Emergency callback manager -->
               <div id="emergency-callback-notification" class="fake-notification" hidden role="link">
-                <div data-icon="call-emergency" class="alert"></div>
+                <div data-icon="call-emergency" class="alert" aria-hidden="true"></div>
                 <div class="title-container" data-l10n-id="emergency-callback-mode"></div>
                 <div class="timer detail"></div>
               </div>
               <!-- Storage watcher notification -->
               <div id="storage-watcher-container" class="fake-notification" role="link">
-                <div data-icon="storage-circle"></div>
+                <div data-icon="storage-circle" aria-hidden="true"></div>
                 <div class="title-container"></div>
                 <div class="detail"></div>
               </div>
@@ -262,7 +262,7 @@
               <!-- IME list -->
               <div id="keyboard-show-ime-list">
                 <div class="fake-notification" role="link">
-                  <div data-icon="keyboard-circle"></div>
+                  <div data-icon="keyboard-circle" aria-hidden="true"></div>
                   <div class="title-container"></div>
                   <div class="detail"></div>
                 </div>
@@ -286,7 +286,7 @@
                 <div class="media-playback-controls" role="toolbar" data-l10n-id="mediaPlaybackControls">
                   <!-- XXX: These used to be button elements for prev/pause/next buttons but we are not able to receive contextmenu event from them. Change to div elements to make it work and able to fast seek from it (Bug 1017294) -->
                   <div data-icon="skip-back" class="previous" data-l10n-id="mediaPlaybackPrevious"></div>
-                  <div data-icon="play" class="play-pause"></div>
+                  <div data-icon="play" class="play-pause" data-l10n-id="mediaPlaybackPlay"></div>
                   <div data-icon="skip-forward" class="next" data-l10n-id="mediaPlaybackNext"></div>
                 </div>
               </div>
@@ -297,10 +297,10 @@
               <!-- Quick settings -->
               <div id="quick-settings" role="toolbar">
                 <ul>
-                  <li><a href="#" id="quick-settings-wifi" class="icon bb-button" data-icon="wifi-4" data-enabled="false" role="button"></a></li>
-                  <li><a href="#" id="quick-settings-airplane-mode" class="icon bb-button" data-icon="airplane" data-enabled="false" role="button"></a></li>
-                  <li><a href="#" id="quick-settings-bluetooth" class="icon bb-button" data-icon="bluetooth" data-enabled="false" role="button"></a></li>
-                  <li><a href="#" id="quick-settings-data" class="icon bb-button" data-icon="data" data-enabled="false" role="button"></a></li>
+                  <li><a href="#" id="quick-settings-wifi" class="icon bb-button" data-icon="wifi-4" data-enabled="false" role="button" data-l10n-id="quick-settings-wifiButton-off"></a></li>
+                  <li><a href="#" id="quick-settings-airplane-mode" class="icon bb-button" data-icon="airplane" data-enabled="false" role="button" data-l10n-id="quick-settings-airplaneMode-off"></a></li>
+                  <li><a href="#" id="quick-settings-bluetooth" class="icon bb-button" data-icon="bluetooth" data-enabled="false" role="button" data-l10n-id="quick-settings-bluetoothButton-off"></a></li>
+                  <li><a href="#" id="quick-settings-data" class="icon bb-button" data-icon="data" data-enabled="false" role="button" data-l10n-id="quick-settings-dataButton-off"></a></li>
                   <li><a href="#" id="quick-settings-full-app" class="icon bb-button" data-icon="settings" data-enabled="false" role="button" data-l10n-id="settingsButton"></a></li>
                 </ul>
               </div>
@@ -765,11 +765,18 @@
       <div id="text-selection-dialog-root" data-z-index-level="text-selection-dialog"></div>
 
       <div id="software-buttons" data-z-index-level="software-buttons">
-        <button id="software-home-button" data-l10n-id="softwareHomeButton"></button>
+        <div id="software-buttons-dead-space" class="dead-space-portrait"></div>
+        <button id="software-home-button" data-l10n-id="softwareHomeButton">
+          <div id="software-home-ring"></div>
+        </button>
       </div>
-      <button id="fullscreen-software-home-button" data-z-index-level="fullscreen-software-home-button"></button>
+      <button id="fullscreen-software-home-button" data-z-index-level="fullscreen-software-home-button">
+        <div id="software-home-ring"></div>
+      </button>
       <div id="software-buttons-fullscreen-layout" data-z-index-level="fullscreen-layout-software-home-button">
-        <button id="fullscreen-layout-software-home-button" data-z-index-level="fullscreen-layout-software-home-button"></button>
+        <button id="fullscreen-layout-software-home-button" data-z-index-level="fullscreen-layout-software-home-button">
+          <div id="software-home-ring"></div>
+        </button>
       </div>
 
       <div id="top-panel" class="gesture-panel" data-z-index-level="gesture-panel"></div>

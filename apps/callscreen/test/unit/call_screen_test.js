@@ -158,12 +158,12 @@ suite('call screen', function() {
     bluetoothMenu = document.createElement('form');
     bluetoothMenu.id = 'bluetooth-menu';
     bluetoothMenu.dataset.dummy = 'dummy';
-    bluetoothMenu.innerHTML = '<menu>' +
-        '<button data-l10n-id="cancel" id="btmenu-btdevice"></button>' +
-        '<button data-l10n-id="cancel" id="btmenu-receiver"></button>' +
-        '<button data-l10n-id="cancel" id="btmenu-speaker"></button>' +
-        '<button data-l10n-id="cancel" id="btmenu-cancel"></button>' +
-      '</menu>';
+    bluetoothMenu.innerHTML = `<menu>
+         <button data-l10n-id="cancel" id="btmenu-btdevice"></button>
+         <button data-l10n-id="cancel" id="btmenu-receiver"></button>
+         <button data-l10n-id="cancel" id="btmenu-speaker"></button>
+         <button data-l10n-id="cancel" id="btmenu-cancel"></button>
+       </menu>`;
     screen.appendChild(bluetoothMenu);
 
     // Replace the existing elements
@@ -203,7 +203,7 @@ suite('call screen', function() {
       this.sinon.stub(CallScreen, 'showClock');
       this.sinon.stub(CallScreen, 'initLockScreenSlide');
       this.sinon.stub(CallScreen, 'render');
-      this.sinon.spy(MockCallsHandler, 'holdOrResumeCallByUser');
+      this.sinon.spy(MockCallsHandler, 'holdOrResumeSingleCall');
       this.sinon.spy(MockCallsHandler, 'mergeCalls');
       mockElements.forEach(function(name) {
         CallScreen[name] = document.createElement('button');
@@ -215,7 +215,7 @@ suite('call screen', function() {
       sinon.assert.notCalled(CallScreen.showClock);
       sinon.assert.notCalled(CallScreen.initLockScreenSlide);
       sinon.assert.notCalled(CallScreen.render);
-      sinon.assert.notCalled(MockCallsHandler.holdOrResumeCallByUser);
+      sinon.assert.notCalled(MockCallsHandler.holdOrResumeSingleCall);
       sinon.assert.notCalled(MockCallsHandler.mergeCalls);
     });
 
@@ -261,7 +261,7 @@ suite('call screen', function() {
 
       test('hold button successfully added and notified', function() {
         CallScreen.holdButton.dispatchEvent(event);
-        sinon.assert.calledOnce(MockCallsHandler.holdOrResumeCallByUser);
+        sinon.assert.calledOnce(MockCallsHandler.holdOrResumeSingleCall);
       });
 
       test('merge button successfully added and notified', function() {
@@ -308,8 +308,8 @@ suite('call screen', function() {
         assert.isTrue(body.classList.contains('single-line'));
         assert.isTrue(calls.classList.contains('big-duration'));
 
-        calls.innerHTML = '<section></section>' +
-                          '<section></section>';
+        calls.innerHTML = `<section></section>
+                           <section></section>`;
         CallScreen.updateCallsDisplay();
         assert.isFalse(body.classList.contains('single-line'));
         assert.isFalse(calls.classList.contains('big-duration'));
@@ -320,15 +320,15 @@ suite('call screen', function() {
         assert.isFalse(body.classList.contains('single-line'));
         assert.isFalse(calls.classList.contains('big-duration'));
 
-        calls.innerHTML = '<section></section>' +
-                          '<section hidden=""></section>';
+        calls.innerHTML = `<section></section>
+                           <section hidden=""></section>`;
         CallScreen.updateCallsDisplay();
         assert.isTrue(body.classList.contains('single-line'));
         assert.isTrue(calls.classList.contains('big-duration'));
 
-        calls.innerHTML = '<section></section>' +
-                          '<section></section>' +
-                          '<section hidden=""></section>';
+        calls.innerHTML = `<section></section>
+                           <section></section>
+                           <section hidden=""></section>`;
 
         CallScreen.updateCallsDisplay();
         assert.isFalse(body.classList.contains('single-line'));

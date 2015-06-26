@@ -45,13 +45,7 @@ marionette('Attachment picking and sending tests', function() {
     test('A contact can be enclosed as attachment', function() {
       messagesApp.addRecipient('+346666666');
 
-      var composer = messagesApp.Composer;
-
-      client.waitFor(function() {
-        return composer.attachButton.enabled();
-      });
-      composer.attachButton.tap();
-      messagesApp.selectSystemMenuOption('Messages Activity Caller');
+      messagesApp.addAttachment();
 
       activityCallerApp.switchTo();
       activityCallerApp.pickContact();

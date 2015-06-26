@@ -11,12 +11,17 @@
    */
   var SystemWindow = function() {};
 
+  SystemWindow.STATES = [
+    'getAudioChannels'
+  ];
+
   SystemWindow.EVENTS = [
-    'mozChromeEvent'
+    'mozSystemWindowChromeEvent'
   ];
 
   BaseModule.create(SystemWindow, {
     name: 'SystemWindow',
+    EVENT_PREFIX: 'systemwindow',
     DEBUG: false,
     // The fake app window ID of System app.
     instanceID: null,
@@ -31,26 +36,36 @@
     _start: function() {
       this.instanceID = 'systemAppID';
       this.audioChannels = new Map();
-      // Get System app's audio channels.
-      this._sendContentEvent({ type: 'system-audiochannel-list' });
     },    
 
     /**
-     * Handle MozChromeEvent.
+     * Handle mozSystemWindowChromeEvent event.
      *
      * @param {Event} evt The event to handle.
      */
-    _handle_mozChromeEvent: function(evt) {
+    _handle_mozSystemWindowChromeEvent: function(evt) {
       var detail = evt.detail;
       switch (detail.type) {
+        // Send the event after system is first time painted
+        // becuase of Bug 1167465.
+        case 'system-first-paint':
+          // Get System app's audio channels.
+          this._sendContentEvent({ type: 'system-audiochannel-list' });
+          break;
+
         case 'system-audiochannel-list':
           detail.audioChannels.forEach((name) => {
             this.audioChannels.set(
               name, new AudioChannelController(this, { name: name })
             );
           });
+          this.publish('audiochannelsregistered');
           break;
       }
+    },
+
+    getAudioChannels: function() {
+      return this.audioChannels;
     },
 
     /**

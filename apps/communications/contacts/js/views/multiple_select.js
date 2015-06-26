@@ -1,4 +1,7 @@
 /* global Contacts, contacts, utils, LazyLoader */
+/* global ContactsService */
+/* global Matcher */
+
 'use strict';
 
 window.Contacts = window.Contacts || {};
@@ -42,7 +45,7 @@ Contacts.MultipleSelect = (function() {
     ];
     LazyLoader.load(DEPENDENCIES, function() {
       contactsToImport.forEach((contact, index) => {
-        contacts.Matcher.match(contact, 'passive', {
+        Matcher.match(contact, 'passive', {
           onmatch: (matches) => {
             var callbacks = {
               success: () => {
@@ -54,16 +57,18 @@ Contacts.MultipleSelect = (function() {
             contacts.adaptAndMerge(contact, matches, callbacks);
           },
           onmismatch: () => {
-            var saving = navigator.mozContacts.save(contact);
 
-            saving.onsuccess = () => {
-              doContinue(true);
-            };
-
-            saving.onerror = (err) => {
-              console.error(err);
-              doContinue();
-            };
+            ContactsService.save(
+              contact,
+              function(e) {
+                if (e) {
+                  console.error(e);
+                  doContinue();
+                  return;
+                }
+                doContinue(true);
+              }
+            );
           }
         });
       });

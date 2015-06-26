@@ -1,4 +1,4 @@
-/* globals BaseModule, MozActivity */
+/* globals BaseModule, MozActivity, Service */
 
 'use strict';
 
@@ -15,6 +15,12 @@
     TRACE: false,
 
     _handle_holdcamera: function(event) {
+      // Avoid triggering the Camera app multiple times if the lockscreen is
+      // locked, and prevent bailing during FTU
+      if (Service.query('locked') || Service.query('isFtuRunning')) {
+        return;
+      }
+
       this.debug('Received holdcamera');
       /* jshint unused:false */
       var activity = new MozActivity({

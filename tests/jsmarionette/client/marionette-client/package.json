@@ -7,9 +7,9 @@
 
   "dependencies": {
     "debug": "~0.6",
-    "json-wire-protocol": "~0.2.1",
-    "socket-retry-connect": "~0.0.1",
-    "sockit-to-me": "0.3.2"
+    "json-wire-protocol": "file:../json-wire-protocol",
+    "socket-retry-connect": "file:../socket-retry-connect",
+    "sockit-to-me": "file:../sockit-to-me"
   },
 
   "devDependencies": {

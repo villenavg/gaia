@@ -1,6 +1,4 @@
 'use strict';
-/* global MockNavigationStack */
-/* global ConfirmDialog */
 /* exported MockContacts */
 /* exported COMMS_APP_ORIGIN */
 
@@ -12,14 +10,8 @@ loadAsyncScriptsDeferred.promise = new Promise((resolve) => {
 });
 
 var MockContacts = {
-  getLength: function(prop) {
-    return prop.length;
-  },
   isEmpty: function(prop) {
     return false;
-  },
-  updatePhoto: function(photo, dest) {
-    dest.setAttribute('backgroundImage', photo);
   },
   hideOverlay: function() {
   },
@@ -28,16 +20,8 @@ var MockContacts = {
   },
   cardStateChanged: function() {
   },
-  extServices: {
-    importLive: function() {},
-    importGmail: function() {}
-  },
-  navigation: new MockNavigationStack(),
   checkCancelableActivity: function() {},
   cancel: function() {},
-  confirmDialog: function() {
-    ConfirmDialog.show.apply(ConfirmDialog, arguments);
-  },
   utility: function(view, callback, type) {
     callback();
   },
@@ -52,7 +36,6 @@ var MockContacts = {
       'update': function() {}
     };
   },
-  showStatus: function(status) {},
   updateSelectCountTitle: function(count) {},
   goBack: function(cb) {
     if (typeof cb === 'function') {

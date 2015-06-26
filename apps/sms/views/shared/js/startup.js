@@ -5,7 +5,7 @@
 
 /*global ActivityHandler, ConversationView, InboxView, MessageManager,
          Settings, LazyLoader, TimeHeaders, Information, SilentSms,
-         App, Navigation, EventDispatcher, LocalizationHelper,
+         App, Navigation, LocalizationHelper,
          InterInstanceEventDispatcher
 */
 
@@ -43,7 +43,10 @@ var Startup = {
     '/views/shared/js/smil.js',
     '/views/shared/js/notify.js',
     '/views/shared/js/activity_handler.js',
-    '/views/shared/js/localization_helper.js'
+    '/views/shared/js/localization_helper.js',
+    '/lib/bridge.js',
+    '/services/js/activity/activity_shim.js',
+    '/services/js/activity/activity_client.js'
   ],
 
   _lazyLoadInit: function() {
@@ -61,8 +64,8 @@ var Startup = {
       ConversationView.init();
       Information.initDefaultViews();
 
-      // Dispatch post-initialize event for continuing the pending action
-      Startup.emit('post-initialize');
+      Navigation.setReady();
+
       window.performance.mark('contentInteractive');
 
       // Fetch mmsSizeLimitation and max concat
@@ -88,16 +91,6 @@ var Startup = {
   * more until all these non-critical JS files are loaded. This is fine.
   */
   init: function() {
-    function initializeDefaultPanel(firstPageLoadedCallback) {
-      Navigation.off('navigated', initializeDefaultPanel);
-
-      InboxView.init();
-      InboxView.renderThreads(firstPageLoadedCallback).then(() => {
-        window.performance.mark('fullyLoaded');
-        App.setReady();
-      });
-    }
-
     var loaded = function() {
       window.removeEventListener('DOMContentLoaded', loaded);
 
@@ -105,16 +98,33 @@ var Startup = {
 
       MessageManager.init();
       Navigation.init();
+      InboxView.init();
+
+      InboxView.once('fully-loaded', () => {
+        window.performance.mark('fullyLoaded');
+
+        App.setReady();
+      });
+
+      InboxView.once('visually-loaded', () => {
+        window.performance.mark('visuallyLoaded');
+      });
 
       // If initial panel is default one and app isn't run from notification,
       // then just navigate to it, otherwise we can delay default panel
       // initialization until we navigate to requested non-default panel.
       if (Navigation.isDefaultPanel() &&
         !navigator.mozHasPendingMessage('notification')) {
+
+        InboxView.once('visually-loaded', () => {
+          this._lazyLoadInit();
+        });
+
+        InboxView.renderThreads();
+
         Navigation.toDefaultPanel();
-        initializeDefaultPanel(this._lazyLoadInit.bind(this));
       } else {
-        Navigation.on('navigated', initializeDefaultPanel);
+        Navigation.once('navigated', () => InboxView.renderThreads());
 
         this._lazyLoadInit();
       }
@@ -128,4 +138,4 @@ var Startup = {
   }
 };
 
-EventDispatcher.mixin(Startup).init();
+Startup.init();

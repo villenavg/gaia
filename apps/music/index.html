@@ -3,7 +3,8 @@
   <head>
     <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1">
     <meta charset="utf-8" />
-    <meta name="theme-color" content="#242d33">
+    <meta name="theme-group" content="theme-media">
+    <meta name="theme-color" content="var(--header-background)">
     <title>Music</title>
     <!-- Include shared building blocks -->
     <link rel="stylesheet" type="text/css" href="shared/elements/gaia-icons/gaia-icons.css"/>
@@ -21,7 +22,6 @@
     <link rel="localization" href="/shared/locales/media/media.{locale}.properties">
     <!-- Shared code -->
     <script defer src="shared/js/l10n.js"></script>
-    <script defer src="shared/js/device_storage/enumerate_all.js"></script>
     <script defer src="shared/js/mediadb.js"></script>
     <script defer src="shared/js/lazy_loader.js"></script>
     <script defer src="shared/js/font_size_utils.js"></script>
@@ -117,7 +117,7 @@
               <button class="rating-star" data-rating="4" role="radio" data-l10n-id="rating-star" data-l10n-args='{"n":"4"}'></button>
               <button class="rating-star" data-rating="5" role="radio" data-l10n-id="rating-star" data-l10n-args='{"n":"5"}'></button>
             </div>
-            <button id="player-album-shuffle" class="player-cover-button" data-icon="shuffle" aria-pressed="true"></button>
+            <button id="player-album-shuffle" class="player-cover-button" data-icon="shuffle" aria-pressed="true" data-l10n-id="shuffle-toggle"></button>
           </div>
           <section id="info-banner" role="status">
             <p data-l10n-id="music-paused-notification"></p>

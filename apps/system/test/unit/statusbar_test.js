@@ -397,8 +397,10 @@ suite('system/Statusbar', function() {
         dashPureName: priority1,
         setOrder: this.sinon.stub()
       };
+      this.sinon.stub(Statusbar, '_updateIconVisibility');
       window.dispatchEvent(new CustomEvent('iconrendered', {detail: mockIcon}));
       assert.isTrue(mockIcon.setOrder.calledWith(order));
+      assert.isTrue(Statusbar._updateIconVisibility.called);
     });
 
     suite('when only 2 icons fit in the maximized status bar', function() {
@@ -580,6 +582,15 @@ suite('system/Statusbar', function() {
       assert.isTrue(spyTopIsMaximized.called);
     });
 
+    test('setAppearance removes maximized if needed', function() {
+      this.sinon.stub(app.appChrome, 'isMaximized').returns(false);
+      app.isHomescreen = undefined;
+      app.isAttentionWindow = undefined;
+      app.isLockscreen = undefined;
+      Statusbar.setAppearance();
+      assert.isFalse(Statusbar.element.classList.contains('maximized'));
+    });
+
     test('setAppearance no appChrome', function() {
       MockService.mockQueryWith('getTopMostWindow', {
         isFullScreen: function isFullScreen() {
@@ -693,28 +704,60 @@ suite('system/Statusbar', function() {
   });
 
   suite('lockscreen support', function() {
-    var lockscreenApp, app;
+    var lockscreenApp, app, cloneStatusbarStub;
 
-    setup(function() {
-      lockscreenApp = getApp(false, true);
-      app = getApp(false, false);
+    function lockScreen() {
       MockService.mockQueryWith('getTopMostWindow', lockscreenApp);
       var evt = new CustomEvent('hierarchytopmostwindowchanged', {
         detail: lockscreenApp
       });
       Statusbar.handleEvent(evt);
-    });
+    }
 
-    teardown(function() {
+    function unlockScreen() {
       var evt = new CustomEvent('hierarchytopmostwindowchanged', {
         detail: app
       });
       Statusbar.handleEvent(evt);
+    }
+
+    function emitStatusbarEvent(evtType) {
+      window.dispatchEvent(new CustomEvent(evtType));
+    }
+
+    setup(function() {
+      lockscreenApp = getApp(false, true);
+      app = getApp(false, false);
+      cloneStatusbarStub = this.sinon.spy(Statusbar, 'cloneStatusbar');
+    });
+
+    teardown(function() {
+      cloneStatusbarStub.restore();
     });
 
     test('should set the lockscreen icons color', function() {
+      lockScreen();
       assert.isFalse(Statusbar.element.classList.contains('light'));
       assert.isTrue(Statusbar.element.classList.contains('maximized'));
+      unlockScreen();
+    });
+
+    test('Locking screen while opening utility tray should not block the ' +
+      'status bar', function() {
+      emitStatusbarEvent('utilitytraywillshow');
+      assert.isFalse(cloneStatusbarStub.called);
+
+      emitStatusbarEvent('utility-tray-abortopen');
+      assert.isTrue(cloneStatusbarStub.called);
+    });
+
+    test('Locking screen while closing utility tray should not block the ' +
+      'status bar', function() {
+      emitStatusbarEvent('utilitytraywillhide');
+      assert.isFalse(cloneStatusbarStub.called);
+
+      emitStatusbarEvent('utility-tray-abortclose');
+      assert.isTrue(cloneStatusbarStub.called);
     });
   });
 
@@ -1129,6 +1172,15 @@ suite('system/Statusbar', function() {
       assert.isFalse(Statusbar.onIconCreated.called);
       Statusbar.finishInit();
       assert.isTrue(Statusbar.onIconCreated.calledWith(wifiIcon));
+    });
+
+    test('statusbar does nothing with unknown icons', function() {
+      this.sinon.stub(wifiIcon, 'setOrder');
+      Statusbar.PRIORITIES.wifi = null;
+      Statusbar.finishInit();
+      assert.isNull(Statusbar.PRIORITIES.wifi);
+      window.dispatchEvent(new CustomEvent('iconrendered', {detail: wifiIcon}));
+      assert.isFalse(wifiIcon.setOrder.called);
     });
 
     test('icon calls render before the statusbar is there', function(done) {

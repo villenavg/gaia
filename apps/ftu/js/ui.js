@@ -163,7 +163,7 @@ var UIManager = {
     this.simInfoBack.addEventListener('click', this);
     this.simInfoForward.addEventListener('click', this);
 
-    this.dataConnectionSwitch.addEventListener('click', this);
+    this.dataConnectionSwitch.addEventListener('change', this);
 
     this.wifiRefreshButton.addEventListener('click', this);
     this.wifiJoinButton.addEventListener('click', this);
@@ -193,7 +193,7 @@ var UIManager = {
     this.timeConfiguration.addEventListener('input', this);
     this.dateConfiguration.addEventListener('input', this);
 
-    this.geolocationSwitch.addEventListener('click', this);
+    this.geolocationSwitch.addEventListener('change', this);
 
     this.fxaCreateAccount.addEventListener('click', this);
 

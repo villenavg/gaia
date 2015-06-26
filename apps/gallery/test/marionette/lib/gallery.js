@@ -29,8 +29,12 @@ Gallery.Selector = Object.freeze({
   thumbnailsDeleteButton: '#thumbnails-delete-button',
   fullscreenBackButton: '#fullscreen-back-button-tiny',
   editButton: '#fullscreen-edit-button-tiny',
+  shareButton: '#fullscreen-share-button-tiny',
   confirmButton: '#confirm-ok',
   overlayView: '#overlay',
+  overlayTitle: '#overlay-title',
+  overlayText: '#overlay-text',
+  overlayCameraButton: '#overlay-camera-button',
   editView: '#edit-view',
   editExposureButton: '#edit-exposure-button',
   editCropButton: '#edit-crop-button',
@@ -46,7 +50,12 @@ Gallery.Selector = Object.freeze({
   editToolApplyButton: '#edit-tool-apply-button',
   editHeader: '#edit-view gaia-header',
   fullscreenFrame2: '#frame2',
-  fullscreenFrame3: '#frame3'
+  fullscreenFrame3: '#frame3',
+  cropDoneButton: '#crop-done-button',
+  editCropCanvas: '#edit-crop-canvas',
+  openTitle: '#filename',
+  openImage: '#frame > .image-view',
+  openSaveButton: '#save'
 });
 
 Gallery.prototype = {
@@ -92,6 +101,29 @@ Gallery.prototype = {
   },
 
   /**
+   * @return {Marionette.Element} Container for overlay message title.
+   */
+  get overlayTitle() {
+    return this.client.helper.waitForElement(Gallery.Selector.overlayTitle);
+  },
+  
+  /**
+   * @return {Marionette.Element} Container for overlay message content.
+   */
+  get overlayText() {
+    return this.client.helper.waitForElement(Gallery.Selector.overlayText);
+  },
+
+  /**
+   * @return {Marionette.Element} Container for the camera button 
+   *                              when no media is found.
+   */
+  get cameraButton() {
+    return this.client.helper.waitForElement(Gallery.Selector.
+      overlayCameraButton);
+  },
+
+  /**
    * @return {Marionette.Element} Element to click to get back
    *                              to thumbnail view.
    */
@@ -128,6 +160,13 @@ Gallery.prototype = {
    */
   get editButton() {
     return this.client.helper.waitForElement(Gallery.Selector.editButton);
+  },
+
+  /**
+   * @return {Marionette.Element} Element to click for sharing image.
+   */
+  get shareButton() {
+    return this.client.helper.waitForElement(Gallery.Selector.shareButton);
   },
 
   /**
@@ -243,6 +282,44 @@ Gallery.prototype = {
   },
 
   /**
+   * @return {Marionette.Element} Done Button to finish crop and pick image.
+   */
+  get cropDoneButton() {
+    return this.client.helper.waitForElement(Gallery.Selector.cropDoneButton);
+  },
+
+  /**
+   * @return {Marionette.Element} edit crop canvas showing crop overlay.
+   */
+  get editCropCanvas() {
+    return this.client.helper.waitForElement(Gallery.Selector.editCropCanvas);
+  },
+
+   /**
+   * @return {Marionette.Element} element to display image opened using
+   * gallery app open activity.
+   */
+  get openActivityImage() {
+    return this.client.helper.waitForElement(Gallery.Selector.openImage);
+  },
+
+  /**
+   * @return {Marionette.Element} header element showing file name opened using
+   * gallery app open activity.
+   */
+  get openActivityImageTitle() {
+    return this.client.helper.waitForElement(Gallery.Selector.openTitle);
+  },
+
+  /**
+   * @return {Marionette.Element} save button that saves image opened using
+   * gallery app open activity.
+   */
+  get openActivitySaveButton() {
+    return this.client.findElement(Gallery.Selector.openSaveButton);
+  },
+
+  /**
    * Read the translateX style and return its integer value.
    */
   getFrameTranslation: function(frame) {
@@ -313,11 +390,25 @@ Gallery.prototype = {
     }.bind(this));
   },
 
+  tapFirstThumbnail: function() {
+    this.thumbnail.click();
+  },
+
+  /**
+  * For gallery app open activity, check opened image src
+  * is set with URL
+  */
+  hasSrcImageBlobURL: function() {
+    var url = 'blob:' + Gallery.ORIGIN;
+    return this.openActivityImage
+               .getAttribute('src').indexOf(url) > -1;
+  },
+
   /**
    * Start the Gallery, save the client for future ops, and wait for the
    * Gallery to finish an initial render.
    */
-  launch: function() {
+  launch: function(nomedia) {
 
     this.client.apps.launch(Gallery.ORIGIN);
     this.client.apps.switchToApp(Gallery.ORIGIN);
@@ -325,6 +416,10 @@ Gallery.prototype = {
     this.client.helper.waitForElement('body');
     // Make sure the gallery is done scanning for new content.
     this.client.setSearchTimeout(1000);
-    this.client.helper.waitForElement(Gallery.Selector.thumbnail);
+
+    // Check for thumbnail when loaded with images
+    if (!nomedia) {
+      this.client.helper.waitForElement(Gallery.Selector.thumbnail); 
+    }
   }
 };

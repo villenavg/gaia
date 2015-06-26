@@ -51,11 +51,7 @@ marionette('Messages Drafts', function() {
 
     // Add attachment.
     if (draft.shouldHaveAttachment) {
-      client.waitFor(function() {
-        return messagesApp.Composer.attachButton.enabled();
-      });
-      messagesApp.Composer.attachButton.tap();
-      messagesApp.selectSystemMenuOption('Messages Activity Caller');
+      messagesApp.addAttachment();
 
       activityCallerApp.switchTo();
       activityCallerApp.pickImage();
@@ -64,7 +60,7 @@ marionette('Messages Drafts', function() {
     messagesApp.switchTo();
     messagesApp.performHeaderAction();
 
-    messagesApp.selectAppMenuOption('Save as Draft');
+    messagesApp.selectAppMenuOption('Replace existing Draft');
   }
 
   function assertDraft(draft) {

@@ -3,10 +3,10 @@
   "version": "0.5.0",
   "author": "James Lal [:lightsofapollo]",
   "description": "Firefox / B2G runtime manager.",
-  "license": "MIT",
   "main": "index.js",
 
   "dependencies" : {
-    "debug": "*"
+    "debug": "*",
+    "mozilla-profile-builder": "file:../mozilla-profile-builder"
   }
 }

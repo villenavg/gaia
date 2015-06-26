@@ -6,11 +6,6 @@ var _toArray = function (arr) {
   return Array.isArray(arr) ? arr : Array.from(arr);
 };
 
-var _classProps = function (child, staticProps, instanceProps) {
-  if (staticProps) Object.defineProperties(child, staticProps);
-  if (instanceProps) Object.defineProperties(child.prototype, instanceProps);
-};
-
 var _extends = function (child, parent) {
   child.prototype = Object.create(parent.prototype, {
     constructor: {
@@ -5105,7 +5100,7 @@ var Service = (function () {
 
   var proto = Object.create(HTMLElement.prototype);
 
-  var template = "<style>\n  .container {\n    position: relative;\n    width: 100%;\n    height: 100%;\n  }\n  .line-numbers {\n    background: #95368c;\n    color: #fff;\n    font-family: Consolas,Monaco,\"Andale Mono\",monospace;\n    font-size: 14px;\n    line-height: 1.2em;\n    position: absolute;\n    padding: 0 2px;\n    top: 0;\n    left: 0;\n    width: 28px;\n    height: 100%;\n    overflow: hidden;\n  }\n  textarea {\n    background: #000;\n    border: none;\n    color: #fff;\n    font-family: Consolas,Monaco,\"Andale Mono\",monospace;\n    font-size: 14px;\n    line-height: 1.2em;\n    position: absolute;\n    top: 0;\n    left: 32px;\n    width: calc(100% - 32px);\n    height: 100%;\n    margin: 0;\n    padding: 0;\n    -moz-user-select: text !important;\n  }\n  .line-numbers,\n  textarea {\n    font-family: Consolas,Monaco,\"Andale Mono\",monospace;\n    font-size: 14px;\n    line-height: 1.2em;\n  }\n</style>\n<div class=\"container\">\n  <div class=\"line-numbers\"></div>\n  <textarea wrap=\"off\"></textarea>\n</div>";
+  var template = "<style scoped>\n  .container {\n    position: relative;\n    width: 100%;\n    height: 100%;\n  }\n  .line-numbers {\n    background: #95368c;\n    color: #fff;\n    font-family: Consolas,Monaco,\"Andale Mono\",monospace;\n    font-size: 14px;\n    line-height: 1.2em;\n    position: absolute;\n    padding: 0 2px;\n    top: 0;\n    left: 0;\n    width: 28px;\n    height: 100%;\n    overflow: hidden;\n  }\n  textarea {\n    background: #000;\n    border: none;\n    color: #fff;\n    font-family: Consolas,Monaco,\"Andale Mono\",monospace;\n    font-size: 14px;\n    line-height: 1.2em;\n    position: absolute;\n    top: 0;\n    left: 32px;\n    width: calc(100% - 32px);\n    height: 100%;\n    margin: 0;\n    padding: 0;\n    -moz-user-select: text !important;\n  }\n  .line-numbers,\n  textarea {\n    font-family: Consolas,Monaco,\"Andale Mono\",monospace;\n    font-size: 14px;\n    line-height: 1.2em;\n  }\n</style>\n<div class=\"container\">\n  <div class=\"line-numbers\">\n    <div>1</div>\n  </div>\n  <textarea autocomplete=\"off\"\n            autocorrect=\"off\"\n            autocapitalize=\"off\"\n            inputmode=\"verbatim\"\n            x-inputmode=\"verbatim\"\n            spellcheck=\"false\"\n            wrap=\"off\"></textarea>\n</div>";
 
   proto.createdCallback = function () {
     var _this3 = this;
@@ -5136,7 +5131,6 @@ var Service = (function () {
 
     set: function (value) {
       this.textarea.value = value;
-      this.dispatchEvent(new CustomEvent("change"));
       updateLineNumbers(this);
     }
   });
@@ -5144,13 +5138,15 @@ var Service = (function () {
   function updateLineNumbers(element) {
     var html = "";
 
-    var lines = element.value.split("\n").length;
-    if (lines === element.lineNumbers.childElementCount) {
-      return;
-    }
+    if (element.value.length < 5000) {
+      var lines = element.value.split("\n").length;
+      if (lines === element.lineNumbers.childElementCount) {
+        return;
+      }
 
-    for (var i = 1; i <= lines; i++) {
-      html += "<div>" + i + "</div>";
+      for (var i = 1; i <= lines; i++) {
+        html += "<div>" + i + "</div>";
+      }
     }
 
     element.lineNumbers.innerHTML = html;
@@ -5226,7 +5222,7 @@ var Service = (function () {
 
   var proto = Object.create(HTMLElement.prototype);
 
-  var template = "<style>\n[data-icon]:before,\n.ligature-icons {\n  font-family: \"customizer-gaia-icons\";\n  content: attr(data-icon);\n  display: inline-block;\n  font-weight: 500;\n  font-style: normal;\n  text-decoration: inherit;\n  text-transform: none;\n  text-rendering: optimizeLegibility;\n  font-size: 30px;\n  -webkit-font-smoothing: antialiased;\n}\n\ncustomizer-gaia-dom-tree {\n  width: 100%;\n  height: 100%;\n}\n\n.pin {\n  position: absolute;\n  top: 0;\n  right: 0;\n  margin: 1rem !important;\n\n  opacity: 1;\n\n  transition: opacity 0.5s ease-in-out;\n}\n\n.pin.scrolling {\n  pointer-events: none;\n\n  opacity: 0;\n}\n</style>\n<customizer-gaia-button circular class=\"pin\" data-action=\"settings\">\n  <i data-icon=\"settings\"></i>\n</customizer-gaia-button>\n<customizer-gaia-dom-tree></customizer-gaia-dom-tree>\n<customizer-gaia-css-inspector></customizer-gaia-css-inspector>\n<customizer-gaia-modal>\n  <p>lorem ipsum...</p>\n</customizer-gaia-modal>";
+  var template = "<style scoped>\n[data-icon]:before {\n  font-family: \"customizer-gaia-icons\";\n  content: attr(data-icon);\n  display: inline-block;\n  font-weight: 500;\n  font-style: normal;\n  text-decoration: inherit;\n  text-transform: none;\n  text-rendering: optimizeLegibility;\n  font-size: 30px;\n}\n[data-customizer-icon]:before {\n  font-family: \"customizer-icons\";\n  content: attr(data-customizer-icon);\n  display: inline-block;\n  font-weight: 500;\n  font-style: normal;\n  text-decoration: inherit;\n  text-transform: none;\n  text-rendering: optimizeLegibility;\n  font-size: 30px;\n}\ncustomizer-gaia-dom-tree {\n  width: 100%;\n  height: calc(100% - 46px);\n}\n.pin {\n  position: absolute;\n  top: 0;\n  right: 0;\n  margin: 1rem !important;\n  opacity: 1;\n  transition: opacity 0.5s ease-in-out;\n}\n.pin.scrolling {\n  pointer-events: none;\n  opacity: 0;\n}\n</style>\n<customizer-gaia-button circular class=\"pin\" data-action=\"settings\">\n  <i data-icon=\"settings\"></i>\n</customizer-gaia-button>\n<customizer-gaia-dom-tree></customizer-gaia-dom-tree>\n<customizer-gaia-toolbar>\n  <button data-customizer-icon=\"edit\" data-action=\"edit\" disabled></button>\n  <button data-customizer-icon=\"copy\" data-action=\"copyOrMove\" disabled></button>\n  <button data-icon=\"add\" data-action=\"append\" disabled></button>\n  <button data-customizer-icon=\"source\" data-action=\"viewSource\" disabled></button>\n  <button data-icon=\"delete\" data-action=\"remove\" disabled></button>\n</customizer-gaia-toolbar>";
 
   proto.createdCallback = function () {
     this.shadow = this.createShadowRoot();
@@ -5234,12 +5230,11 @@ var Service = (function () {
 
     this.settingsButton = this.shadow.querySelector("[data-action=\"settings\"]");
     this.gaiaDomTree = this.shadow.querySelector("customizer-gaia-dom-tree");
-    this.gaiaCssInspector = this.shadow.querySelector("customizer-gaia-css-inspector");
-    this.gaiaModal = this.shadow.querySelector("customizer-gaia-modal");
+    this.gaiaToolbar = this.shadow.querySelector("customizer-gaia-toolbar");
 
     this.settingsButton.addEventListener("click", this._handleMenuAction.bind(this));
     this.gaiaDomTree.addEventListener("click", this._handleSelected.bind(this));
-    this.gaiaDomTree.addEventListener("longpressed", this._handleLongPressed.bind(this));
+    this.gaiaToolbar.addEventListener("click", this._handleAction.bind(this));
 
     this._watchScrolling();
 
@@ -5260,13 +5255,39 @@ var Service = (function () {
       this._root = null;
     }
 
-    // If we've got a new root node, set that one up
-    if (rootNode) {
-      this._root = rootNode;
-      rootNode.addEventListener("click", this._rootNodeClickHandler);
-      this.gaiaDomTree.setRoot(rootNode);
-      this.gaiaDomTree.render();
-      this.watchChanges();
+    if (!rootNode) {
+      return;
+    }
+
+    // Set up the new root node
+    this._root = rootNode;
+    rootNode.addEventListener("click", this._rootNodeClickHandler);
+    this.gaiaDomTree.setRoot(rootNode);
+    this.gaiaDomTree.render();
+    this.watchChanges();
+
+    // Pre-expand the root node
+    var rootTreeNode = this.gaiaDomTree.treeMap.get(rootNode);
+    if (rootTreeNode) {
+      this.gaiaDomTree.expandNode(rootTreeNode);
+    }
+
+    var head = rootNode.querySelector("head");
+    var body = rootNode.querySelector("body");
+    if (!head || !body) {
+      return;
+    }
+
+    // Pre-expand the <head> node
+    var headTreeNode = this.gaiaDomTree.treeMap.get(head);
+    if (headTreeNode) {
+      this.gaiaDomTree.expandNode(headTreeNode);
+    }
+
+    // Pre-expand the <body> node
+    var bodyTreeNode = this.gaiaDomTree.treeMap.get(body);
+    if (bodyTreeNode) {
+      this.gaiaDomTree.expandNode(bodyTreeNode);
     }
   };
 
@@ -5335,7 +5356,6 @@ var Service = (function () {
   proto._handleMenuAction = function (e) {
     var action = e.target.dataset.action;
     if (action) {
-      console.log(action);
       this.dispatchEvent(new CustomEvent("menu", {
         detail: action
       }));
@@ -5350,17 +5370,21 @@ var Service = (function () {
       return;
     }
 
-    this._selected = (selectedNode.nodeType === Node.TEXT_NODE) ? selectedNode.parentNode : selectedNode;
+    var selected = this._selected = (selectedNode.nodeType === Node.TEXT_NODE) ? selectedNode.parentNode : selectedNode;
+
+    [].forEach.call(this.gaiaToolbar.querySelectorAll("button"), function (button) {
+      button.disabled = !selected;
+    });
+
+    this.gaiaToolbar.querySelector("[data-action=\"viewSource\"]").disabled = (selected.tagName !== "SCRIPT" || !selected.hasAttribute("src")) && (selected.tagName !== "LINK" || !selected.hasAttribute("href"));
 
     this.dispatchEvent(new CustomEvent("selected", {
       detail: this._selected
     }));
   };
 
-  proto._handleLongPressed = function (e) {
-    this._handleSelected(e);
-
-    this.dispatchEvent(new CustomEvent("action", {
+  proto._handleAction = function (e) {
+    this.dispatchEvent(new CustomEvent("action:" + e.target.dataset.action, {
       detail: this._selected
     }));
   };
@@ -5382,58 +5406,424 @@ var Service = (function () {
   }
 })(window);
 
-/* global Controller */
+(function (window) {
+  "use strict";
 
-/* global AddonService */
-
-var ActionMenuController = (function (Controller) {
-  var ActionMenuController = function ActionMenuController(options) {
-    Controller.call(this, options);
+  var HTML_ESCAPE_CHARS = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "\"": "&quot;",
+    "'": "&#39;",
+    "/": "&#x2F;"
   };
 
-  _extends(ActionMenuController, Controller);
+  var CONSTANT_PROPERTY_REGEX = /^[A-Z_]+$/;
 
-  ActionMenuController.prototype.open = function (target) {
-    this.target = target;
-    // Only enable the View Source button if the element is
-    // a <script> tag with a src attribute or a <link> tag with a href
-    // attribute.
-    // TODO: If the target is an image (or video or audio?) element, enable
-    // a View Image button in the menu.
-    this.view.enableViewSource((target.tagName === "SCRIPT" && target.hasAttribute("src")) || (target.tagName === "LINK" && target.hasAttribute("href")));
-    this.view.dialog.open();
-  };
+  var proto = Object.create(HTMLElement.prototype);
 
-  ActionMenuController.prototype.close = function () {
-    this.view.dialog.close();
-  };
+  var template = "<style scoped>\n  [data-customizer-icon]:before {\n    font-family: \"customizer-icons\";\n    content: attr(data-customizer-icon);\n    display: inline-block;\n    font-weight: 500;\n    font-style: normal;\n    text-decoration: inherit;\n    text-transform: none;\n    text-rendering: optimizeLegibility;\n    font-size: 30px;\n  }\n  [flex] {\n    display: flex;\n    justify-content: space-between;\n    padding: 0 5px;\n  }\n  [flex] > * {\n    flex: 1 1 auto;\n    margin-right: 5px;\n    margin-left: 5px;\n  }\n  #container {\n    box-sizing: border-box;\n    position: relative;\n    width: 100%;\n    height: 100%;\n    overflow-x: hidden;\n    overflow-y: auto;\n  }\n  customizer-gaia-list a {\n    position: relative;\n    text-decoration: none;\n  }\n  customizer-gaia-list [hidden] {\n    display: none;\n  }\n  customizer-gaia-list h3 {\n    font-size: 18px;\n    max-width: calc(100% - 2em);\n    overflow: hidden;\n    text-overflow: ellipsis;\n    white-space: nowrap;\n  }\n  customizer-gaia-list [data-customizer-icon] {\n    position: absolute;\n    padding: 1.6em 1em;\n    top: 0;\n    right: 0;\n  }\n  customizer-gaia-list .value {\n    color: #00aac5;\n  }\n  fxos-code-editor {\n    display: block;\n    width: 100%;\n    height: calc(100% - 100px);\n  }\n</style>\n<div id=\"container\"></div>\n<customizer-gaia-dialog-prompt id=\"new-attribute-name\">\n  Enter new attribute name\n</customizer-gaia-dialog-prompt>";
 
-  ActionMenuController.prototype.edit = function () {
-    this.editController.open(this.target);
-  };
+  proto.createdCallback = function () {
+    var _this6 = this;
+    this.shadow = this.createShadowRoot();
+    this.shadow.innerHTML = template;
 
-  ActionMenuController.prototype.remove = function () {
-    AddonService.generate(this.target, function (generator) {
-      generator.opRemove();
+    this.container = this.shadow.querySelector("#container");
+    this.newAttributeName = this.shadow.querySelector("#new-attribute-name");
+
+    this.keyPath = [];
+
+    // Handle all clicks within this component.
+    this.container.addEventListener("click", function (evt) {
+      // Handle case where <a href> was clicked.
+      var target = evt.target.closest("a");
+      if (target) {
+        evt.preventDefault();
+
+        // Handle case where <i data-action="remove"> was clicked.
+        if (evt.target.dataset.action === "remove") {
+          _this6._handleRemoveAttributeClick(target);
+        }
+
+        // Otherwise, treat as regular list item click.
+        else {
+          _this6._handleListItemClick(target);
+        }
+        return;
+      }
+
+      // Handle case where <customizer-gaia-button> was clicked.
+      target = evt.target.closest("customizer-gaia-button");
+      if (target) {
+        evt.preventDefault();
+        _this6._handleButtonClick(target);
+        return;
+      }
+    });
+
+    // Filter the list of properties 500ms after a keypress
+    // in the <customizer-gaia-text-input> search box.
+    this.container.addEventListener("keyup", function (evt) {
+      var textInput = evt.target.closest("customizer-gaia-text-input");
+      if (!textInput) {
+        return;
+      }
+
+      clearTimeout(_this6._searchTimeout);
+      _this6._searchTimeout = setTimeout(function () {
+        var value = textInput.value.toLowerCase();
+        var items = [].slice.apply(_this6.container.querySelectorAll("customizer-gaia-list a[data-search]"));
+
+        // Toggle each list items' [hidden] attribute if the search text
+        // isn't blank and the items' [data-search] value contains the
+        // current search text.
+        items.forEach(function (i) {
+          return i.hidden = value && i.dataset.search.indexOf(value) === -1;
+        });
+      }, 500);
+    });
+
+    // Automatically set focus to the input box when the
+    // <customizer-gaia-dialog-prompt> is opened.
+    this.newAttributeName.addEventListener("opened", function () {
+      _this6.newAttributeName.els.input.focus();
+    });
+
+    // Reset the <customizer-gaia-dialog-prompt> value when closed.
+    this.newAttributeName.addEventListener("closed", function () {
+      _this6.newAttributeName.els.input.value = "";
+    });
+
+    // Create a new attribute when the <customizer-gaia-dialog-prompt>
+    // is submitted.
+    this.newAttributeName.els.submit.addEventListener("click", function () {
+      try {
+        var name = _this6.newAttributeName.els.input.value;
+        var attribute = document.createAttribute(name);
+
+        _this6.target.setNamedItem(attribute);
+
+        _this6.dispatchEvent(new CustomEvent("createattribute", {
+          detail: JSON.stringify({
+            keyPath: _this6.keyPath,
+            expression: "['" + _this6.keyPath.join("']['") + "']",
+            name: name
+          })
+        }));
+      } catch (e) {
+        window.alert("Invalid attribute name");
+        return;
+      }
+
+      _this6.render();
     });
   };
 
-  ActionMenuController.prototype.viewSource = function () {
-    this.viewSourceController.open(this.target);
+  proto.render = function () {
+    var _this7 = this;
+    clearTimeout(this._searchTimeout);
+
+    this.target = this.rootTarget;
+    this.keyPath.forEach(function (key) {
+      return _this7.target = _this7.target[key];
+    });
+
+    this.container.innerHTML = renderTargetPage(this.target, this.keyPath.length === 0).innerHTML;
+    this.container.scrollTo(0, 0);
   };
 
-  ActionMenuController.prototype.copyOrMove = function () {
-    this.copyMoveController.open(this.target);
+  proto.setRootTarget = function (rootTarget) {
+    this.rootTarget = rootTarget;
+    this.target = this.rootTarget;
+
+    this.keyPath = [];
+    this.render();
   };
 
-  ActionMenuController.prototype.append = function () {
-    this.appendChildController.open(this.target);
+  proto._handleButtonClick = function (target) {
+    var _this8 = this;
+    switch (target.dataset.action) {
+      case "cancel":
+        this.keyPath.pop();
+        break;
+      case "save":
+        (function () {
+          var value = _this8.container.querySelector("fxos-code-editor").value;
+          var target = _this8.rootTarget;
+
+          _this8.keyPath.forEach(function (key, index) {
+            if (index < _this8.keyPath.length - 1) {
+              target = target[key];
+              return;
+            }
+
+            target[key] = value;
+          });
+
+          _this8.dispatchEvent(new CustomEvent("save", {
+            detail: JSON.stringify({
+              keyPath: _this8.keyPath,
+              expression: "['" + _this8.keyPath.join("']['") + "']",
+              value: value
+            })
+          }));
+
+          _this8.keyPath.pop();
+        })();
+        break;
+      default:
+        break;
+    }
+
+    this.render();
   };
 
-  ActionMenuController.prototype.cancel = function () {};
+  proto._handleRemoveAttributeClick = function (target) {
+    var name = target.getAttribute("href");
+    this.target.removeNamedItem(name);
 
-  return ActionMenuController;
-})(Controller);
+    this.dispatchEvent(new CustomEvent("removeattribute", {
+      detail: JSON.stringify({
+        keyPath: this.keyPath,
+        expression: "['" + this.keyPath.join("']['") + "']",
+        name: name
+      })
+    }));
+
+    this.render();
+  };
+
+  proto._handleListItemClick = function (target) {
+    // If the link clicked has an `href` pointing
+    // to "../", go back to the previous level in
+    // the key path.
+    var href = target.getAttribute("href");
+    if (href === "../") {
+      this.keyPath.pop();
+    }
+
+    // Show "Create New Attribute" prompt.
+    else if (href === "#add-attribute") {
+      this.newAttributeName.open();
+    }
+
+    // Otherwise, push the next part of the key path.
+    else {
+      this.keyPath.push(href);
+    }
+
+    this.render();
+  };
+
+  /**
+   * Helper function for determining the type of
+   * page to render for the current target (editor
+   * or list).
+   */
+  function renderTargetPage(target, isRoot) {
+    // If the target is not an object, assume that
+    // it is editable and render the editor page.
+    if (typeof target !== "object") {
+      return renderTargetEditor(target);
+    }
+
+    // Otherwise, the target is an enumerable object
+    // and we can render the list page.
+    return renderTargetList(target, isRoot);
+  }
+
+  /**
+   * Helper for rendering the editor page.
+   */
+  function renderTargetEditor(target) {
+    var page = document.createElement("section");
+    page.innerHTML = "<fxos-code-editor>" + target + "</fxos-code-editor>\n<section flex>\n  <customizer-gaia-button data-action=\"cancel\">Cancel</customizer-gaia-button>\n  <customizer-gaia-button data-action=\"save\">Save</customizer-gaia-button>\n</section>";
+
+    return page;
+  }
+
+  /**
+   * Helper for rendering the list page.
+   */
+  function renderTargetList(target, isRoot) {
+    var list = document.createElement("customizer-gaia-list");
+
+    if (!isRoot) {
+      list.appendChild(renderBackItem());
+    }
+
+    if (target instanceof window.NamedNodeMap) {
+      list.appendChild(renderAddAttributeItem());
+    }
+
+    getSortedProperties(target).forEach(function (property) {
+      list.appendChild(renderTargetListItem(target, property));
+    });
+
+    var page = document.createElement("section");
+    page.innerHTML = "<section flex>\n  <customizer-gaia-text-input type=\"search\" placeholder=\"Search Properties\"></customizer-gaia-text-input>\n</section>\n" + list.outerHTML;
+
+    return page;
+  }
+
+  /**
+   * Helper for rendering a list item.
+   */
+  function renderTargetListItem(target, property) {
+    var value = target[property];
+    if (value instanceof window.Attr) {
+      value = "'" + escapeHTML(value.value) + "'";
+    } else if (typeof value === "string") {
+      value = "'" + escapeHTML(value) + "'";
+    }
+
+    var a = document.createElement("a");
+    a.href = property;
+    a.dataset.search = property.toLowerCase();
+    a.innerHTML = "<h3>" + property + " = <span class=\"value\">" + value + "</span></h3>";
+
+    // Append "X" button to remove attributes.
+    if (target instanceof window.NamedNodeMap) {
+      a.innerHTML += "<i data-customizer-icon=\"remove\" data-action=\"remove\"></i>";
+    }
+
+    return a;
+  }
+
+  /**
+   * Helper for rendering the "Up One Level [..]" list item.
+   */
+  function renderBackItem() {
+    var a = document.createElement("a");
+    a.href = "../";
+    a.innerHTML = "<h3>Up One Level [..]</h3>";
+
+    return a;
+  }
+
+  /**
+   * Helper for rendering the "Create New Attribute"
+   * list item.
+   */
+  function renderAddAttributeItem() {
+    var a = document.createElement("a");
+    a.href = "#add-attribute";
+    a.innerHTML = "<h3>Create New Attribute</h3>\n<i data-customizer-icon=\"add\"></i>";
+
+    return a;
+  }
+
+  /**
+   * Helper for enumerating and sorting all direct
+   * properties for the specified target object.
+   * This also handles an `attributes` object as a
+   * special case and returns a sorted array of
+   * attribute names instead of an array-indexed
+   * list of `Attr` objects.
+   */
+  function getSortedProperties(target) {
+    var properties = [];
+
+    // If the `target` is a `NamedNodeMap` (attributes),
+    // enumerate the attributes and push their names
+    // instead of treating it as properties.
+    if (target instanceof window.NamedNodeMap) {
+      for (var _iterator = target[Symbol.iterator](), _step; !(_step = _iterator.next()).done;) {
+        var attr = _step.value;
+        properties.push(attr.name);
+      }
+
+      properties = properties.sort();
+    }
+
+    // Otherwise, emumerate the properties as usual.
+    else {
+      for (var property in target) {
+        // Omit invalid properties.
+        if (!isValidProperty(target, property)) {
+          continue;
+        }
+
+        // Omit constants.
+        if (CONSTANT_PROPERTY_REGEX.test(property)) {
+          continue;
+        }
+
+        // Omit native functions unless the target object
+        // directly contains them (e.g. `Element.prototype`).
+        if (!target.hasOwnProperty(property) && isNativeFunction(target[property])) {
+          continue;
+        }
+
+        properties.push(property + "");
+      }
+
+      // Explicitly add the `nodeValue`, `textContent` and
+      // `value` properties for empty attributes so their
+      // values can be set.
+      if (target instanceof window.Attr && !target.value) {
+        properties.push("nodeValue");
+        properties.push("textContent");
+        properties.push("value");
+      }
+
+      properties = properties.sort();
+
+      // Append `__proto__` property to end of array after
+      // sorting (if the object has one).
+      if (target.__proto__) {
+        properties.push("__proto__");
+      }
+    }
+
+    return properties;
+  }
+
+  /**
+   * Escapes HTML strings so that <, > and quotation
+   * characters are properly rendered in the list items.
+   */
+  function escapeHTML(html) {
+    return html.replace(/[&<>"'\/]/g, function (s) {
+      return HTML_ESCAPE_CHARS[s];
+    });
+  }
+
+  /**
+   * Determines if the specified property is valid for
+   * the target object.
+   * NOTE: The `try`/`catch` is necessary to catch
+   * exceptions for properties that cannot be directly
+   * accessed.
+   */
+  function isValidProperty(target, property) {
+    try {
+      return !!target[property];
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /**
+   * Determines if a function is native. Native functions
+   * are filtered from the list items unless they are direct
+   * members of the current target object. This is to
+   * provide consistency with object/property inspection on
+   * desktop DevTools.
+   */
+  function isNativeFunction(value) {
+    return typeof value === "function" && !! ~value.toString().indexOf("[native code]");
+  }
+
+  try {
+    document.registerElement("fxos-inspector", { prototype: proto });
+  } catch (e) {
+    if (e.name !== "NotSupportedError") {
+      throw e;
+    }
+  }
+})(window);
 
 /* global Controller */
 
@@ -5445,6 +5835,12 @@ var AppendChildController = (function (Controller) {
   };
 
   _extends(AppendChildController, Controller);
+
+  AppendChildController.prototype.teardown = function () {
+    this.view = null;
+
+    this.target = null;
+  };
 
   AppendChildController.prototype.open = function (target) {
     this.target = target;
@@ -5478,10 +5874,16 @@ var CopyMoveController = (function (Controller) {
 
   _extends(CopyMoveController, Controller);
 
+  CopyMoveController.prototype.teardown = function () {
+    this.view = null;
+
+    this.target = null;
+  };
+
   CopyMoveController.prototype.open = function (target) {
     this.target = target;
 
-    this.view.domTree.filter = "#" + this.mainController.view.el.id;
+    this.view.domTree.filter = "#" + window.__customizer__.mainController.view.el.id;
     this.view.domTree.setRoot(document.documentElement);
     this.view.domTree.render();
 
@@ -5502,46 +5904,46 @@ var CopyMoveController = (function (Controller) {
   };
 
   CopyMoveController.prototype.before = function () {
-    var _this6 = this;
-    AddonService.generate(this.target, function (generator) {
-      var op = generator["op" + _this6.mode + "Before"];
-      op.call(generator, _this6.destination);
-
-      _this6.view.dialog.close();
-      _this6.view.modal.close();
-    });
-  };
-
-  CopyMoveController.prototype.after = function () {
-    var _this7 = this;
-    AddonService.generate(this.target, function (generator) {
-      var op = generator["op" + _this7.mode + "After"];
-      op.call(generator, _this7.destination);
-
-      _this7.view.dialog.close();
-      _this7.view.modal.close();
-    });
-  };
-
-  CopyMoveController.prototype.prepend = function () {
-    var _this8 = this;
-    AddonService.generate(this.target, function (generator) {
-      var op = generator["op" + _this8.mode + "Prepend"];
-      op.call(generator, _this8.destination);
-
-      _this8.view.dialog.close();
-      _this8.view.modal.close();
-    });
-  };
-
-  CopyMoveController.prototype.append = function () {
     var _this9 = this;
     AddonService.generate(this.target, function (generator) {
-      var op = generator["op" + _this9.mode + "Append"];
+      var op = generator["op" + _this9.mode + "Before"];
       op.call(generator, _this9.destination);
 
       _this9.view.dialog.close();
       _this9.view.modal.close();
+    });
+  };
+
+  CopyMoveController.prototype.after = function () {
+    var _this10 = this;
+    AddonService.generate(this.target, function (generator) {
+      var op = generator["op" + _this10.mode + "After"];
+      op.call(generator, _this10.destination);
+
+      _this10.view.dialog.close();
+      _this10.view.modal.close();
+    });
+  };
+
+  CopyMoveController.prototype.prepend = function () {
+    var _this11 = this;
+    AddonService.generate(this.target, function (generator) {
+      var op = generator["op" + _this11.mode + "Prepend"];
+      op.call(generator, _this11.destination);
+
+      _this11.view.dialog.close();
+      _this11.view.modal.close();
+    });
+  };
+
+  CopyMoveController.prototype.append = function () {
+    var _this12 = this;
+    AddonService.generate(this.target, function (generator) {
+      var op = generator["op" + _this12.mode + "Append"];
+      op.call(generator, _this12.destination);
+
+      _this12.view.dialog.close();
+      _this12.view.modal.close();
     });
   };
 
@@ -5559,6 +5961,13 @@ var EditController = (function (Controller) {
 
   _extends(EditController, Controller);
 
+  EditController.prototype.teardown = function () {
+    this.view = null;
+
+    this.target = null;
+    this.changes = null;
+  };
+
   EditController.prototype.open = function (target) {
     this.target = target;
 
@@ -5569,25 +5978,40 @@ var EditController = (function (Controller) {
   };
 
   EditController.prototype.close = function () {
-    this.view.close();
+    if (this.changes.innerHTML || this.changes.script || this.changes.createAttributes || this.changes.removeAttributes || this.changes.properties) {
+      if (window.confirm("Are you sure you want to discard your changes?")) {
+        this.view.close();
+      }
+    } else {
+      this.view.close();
+    }
   };
 
   EditController.prototype.save = function () {
-    var _this10 = this;
+    var _this13 = this;
     AddonService.generate(this.target, function (generator) {
-      if (_this10.changes.innerHTML) {
-        generator.opInnerHTML(_this10.changes.innerHTML);
+      if (_this13.changes.innerHTML) {
+        generator.opInnerHTML(_this13.changes.innerHTML);
       }
 
-      if (_this10.changes.script) {
-        generator.opScript(_this10.changes.script);
+      if (_this13.changes.script) {
+        generator.opScript(_this13.changes.script);
       }
 
-      if (_this10.changes.properties) {
-        generator.opSetProperties(_this10.changes.properties);
+      if (_this13.changes.createAttributes) {
+        generator.opCreateAttributes(_this13.changes.createAttributes);
       }
 
-      _this10.close();
+      if (_this13.changes.removeAttributes) {
+        generator.opRemoveAttributes(_this13.changes.removeAttributes);
+      }
+
+      if (_this13.changes.properties) {
+        generator.opSetProperties(_this13.changes.properties);
+      }
+
+      _this13.changes = {};
+      _this13.close();
     });
   };
 
@@ -5598,14 +6022,12 @@ var EditController = (function (Controller) {
 
 /*global EditView*/
 /*global ViewSourceView*/
-/*global ActionMenuView*/
 /*global AppendChildView*/
 /*global CopyMoveView*/
 /*global MainView*/
 
 /*global EditController*/
 /*global ViewSourceController*/
-/*global ActionMenuController*/
 /*global AppendChildController*/
 /*global CopyMoveController*/
 
@@ -5614,128 +6036,167 @@ var EditController = (function (Controller) {
 
 var MainController = (function (Controller) {
   var MainController = function MainController(options) {
-    var _this11 = this;
     Controller.call(this, options);
 
-    this._checkOpenFromLauncher();
     this._waitToBeOpened();
 
-    window.addEventListener("visibilitychange", function () {
-      if (!document.hidden) {
-        _this11._checkOpenFromLauncher();
-      }
-    });
+    this._visibilitychangeHandler = this._visibilitychangeHandler.bind(this);
+    window.addEventListener("visibilitychange", this._visibilitychangeHandler);
+
+    // Wait 1 second before checking with Customizer Launcher to
+    // prevent the Customizer DOM from getting wiped out by the
+    // app initialization.
+    setTimeout(this._checkOpenFromLauncher.bind(this), 1000);
 
     console.log("[Customizer] Initialized MainController", this);
   };
 
   _extends(MainController, Controller);
 
+  MainController.prototype.teardown = function () {
+    window.removeEventListener("visibilitychange", this._visibilitychangeHandler);
+
+    for (var property in this) {
+      if (this[property] instanceof Controller) {
+        this[property].teardown();
+        this[property] = null;
+      }
+    }
+
+    this.view.customizer.setRootNode(null);
+    this.view = null;
+
+    console.log("[Customizer] Cleaned up controllers and views");
+
+    window.__customizer__.mainController = new MainController({
+      manifestURL: this.manifestURL,
+      lazyLoadModules: false
+    });
+  };
+
   MainController.prototype._lazyLoadModules = function () {
-    var _this12 = this;
-    this._loadedModules = this._loadedModules || new Promise(function (resolve, reject) {
+    var _this14 = this;
+    return new Promise(function (resolve, reject) {
       /*jshint evil:true*/
-      var source = window.localStorage.getItem("__CUSTOMIZER__componentsSource");
-      if (!source) {
-        reject();
-        return;
+      if (_this14.lazyLoadModules) {
+        var source = window.localStorage.getItem("__CUSTOMIZER__componentsSource");
+        if (!source) {
+          reject();
+          return;
+        }
+
+        eval.call(window, source);
+        console.log("[Customizer] Lazy-loaded modules");
       }
 
-      eval.call(window, source);
+      resolve();
+    });
+  };
 
+  MainController.prototype._initControllers = function () {
+    var _this15 = this;
+    return new Promise(function (resolve) {
       var editView = new EditView();
-      var actionMenuView = new ActionMenuView();
       var viewSourceView = new ViewSourceView();
       var appendChildView = new AppendChildView();
       var copyMoveView = new CopyMoveView();
       var mainView = new MainView({
         editView: editView,
-        actionMenuView: actionMenuView,
         viewSourceView: viewSourceView,
         appendChildView: appendChildView,
         copyMoveView: copyMoveView
       });
 
-      var editController = new EditController({
+      _this15.editController = new EditController({
         view: editView
       });
 
-      var viewSourceController = new ViewSourceController({
+      _this15.viewSourceController = new ViewSourceController({
         view: viewSourceView
       });
 
-      var appendChildController = new AppendChildController({
+      _this15.appendChildController = new AppendChildController({
         view: appendChildView
       });
 
-      var copyMoveController = new CopyMoveController({
+      _this15.copyMoveController = new CopyMoveController({
         view: copyMoveView
       });
 
-      var actionMenuController = new ActionMenuController({
-        view: actionMenuView,
-        editController: editController,
-        viewSourceController: viewSourceController,
-        appendChildController: appendChildController,
-        copyMoveController: copyMoveController
-      });
+      _this15.view = mainView;
+      mainView.init(_this15);
 
-      _this12.view = mainView;
-      mainView.init(_this12);
-
-      _this12.actionMenuController = actionMenuController;
-
-      editController.mainController = _this12;
-      viewSourceController.mainController = _this12;
-      actionMenuController.mainController = _this12;
-      appendChildController.mainController = _this12;
-      copyMoveController.mainController = _this12;
-
-      console.log("[Customizer] Lazy-initialized modules");
+      console.log("[Customizer] Initialized controllers and views");
       resolve();
     });
-
-    return this._loadedModules;
   };
 
   MainController.prototype._waitToBeOpened = function () {
-    var _this13 = this;
-    Gesture.detect(this.openGesture).then(function () {
-      return _this13.open();
+    var _this16 = this;
+    Gesture.detect({
+      type: "swipe", // Swipe:
+      numFingers: 2, // with two fingers,
+      startRegion: { // from bottom 30% of the screen (10% for SHB),
+        x0: 0, y0: 0.8, x1: 1, y1: 1.1
+      },
+      endRegion: { // up into the top 75% of the screen,
+        x0: 0, y0: 0, x1: 1, y1: 0.75
+      },
+      maxTime: 1000 }).then(function () {
+      return _this16.open();
     });
   };
 
   MainController.prototype._waitToBeClosed = function () {
-    var _this14 = this;
-    Gesture.detect(this.closeGesture).then(function () {
-      return _this14.close();
+    var _this17 = this;
+    Gesture.detect({
+      type: "swipe", // Swipe:
+      numFingers: 2, // with two fingers,
+      startRegion: { // from the middle ~half of the screen
+        x0: 0, y0: 0.3, x1: 1, y1: 0.7
+      },
+      endRegion: { // down into the bottom quarter of the screen
+        x0: 0, y0: 0.75, x1: 1, y1: 1
+      },
+      maxTime: 1000 }).then(function () {
+      return _this17.close();
     });
   };
 
   MainController.prototype._checkOpenFromLauncher = function () {
-    var _this15 = this;
+    var _this18 = this;
     var requestXHR = new XMLHttpRequest();
-    requestXHR.open("GET", "http://localhost:3215/request", true);
-    requestXHR.onload = function () {
-      if (requestXHR.responseText !== _this15.manifestURL) {
-        return;
-      }
+    try {
+      requestXHR.open("GET", "http://localhost:3215/request", true);
+      requestXHR.onload = function () {
+        if (requestXHR.responseText !== _this18.manifestURL) {
+          return;
+        }
 
-      _this15.open();
+        _this18.open();
 
-      var confirmXHR = new XMLHttpRequest();
-      confirmXHR.open("GET", "http://localhost:3215/confirm?url=" + _this15.manifestURL, true);
+        var confirmXHR = new XMLHttpRequest();
+        confirmXHR.open("GET", "http://localhost:3215/confirm?url=" + _this18.manifestURL, true);
 
-      console.log("Sending HTTP request confirmation to Customizer Launcher");
-      confirmXHR.send();
-    };
+        console.log("Sending HTTP request confirmation to Customizer Launcher");
+        confirmXHR.send();
+      };
 
-    console.log("Sending HTTP request check to Customizer Launcher");
-    requestXHR.send();
+      console.log("Sending HTTP request check to Customizer Launcher");
+      requestXHR.send();
+    } catch (e) {
+      console.log("HTTP request failed to Customizer Launcher", e);
+    }
+  };
+
+  MainController.prototype._visibilitychangeHandler = function () {
+    if (!document.hidden) {
+      this._checkOpenFromLauncher();
+    }
   };
 
   MainController.prototype.open = function () {
-    var _this16 = this;
+    var _this19 = this;
     if (this._isOpen) {
       return;
     }
@@ -5743,21 +6204,23 @@ var MainController = (function (Controller) {
     this._isOpen = true;
 
     this._lazyLoadModules().then(function () {
-      return _this16.view.open();
+      return _this19._initControllers();
     }).then(function () {
-      _this16.view.customizer.setRootNode(document.documentElement);
-      _this16._waitToBeClosed();
+      return _this19.view.open();
+    }).then(function () {
+      _this19.view.customizer.setRootNode(document.documentElement);
+      _this19._waitToBeClosed();
     });
   };
 
   MainController.prototype.close = function () {
-    var _this17 = this;
+    var _this20 = this;
     if (!this._isOpen) {
       return;
     }
 
     this.view.close().then(function () {
-      return _this17._waitToBeOpened();
+      return _this20.teardown();
     });
 
     this._isOpen = false;
@@ -5779,37 +6242,6 @@ var MainController = (function (Controller) {
       console.error("Error opening \"Settings > Add-ons\" panel", e);
     };
   };
-
-  _classProps(MainController, null, {
-    openGesture: {
-      get: function () {
-        return {
-          type: "swipe", // Swipe:
-          numFingers: 2, // with two fingers,
-          startRegion: { // from bottom 30% of the screen (10% for SHB),
-            x0: 0, y0: 0.8, x1: 1, y1: 1.1
-          },
-          endRegion: { // up into the top 75% of the screen,
-            x0: 0, y0: 0, x1: 1, y1: 0.75
-          },
-          maxTime: 1000 };
-      }
-    },
-    closeGesture: {
-      get: function () {
-        return {
-          type: "swipe", // Swipe:
-          numFingers: 2, // with two fingers,
-          startRegion: { // from the middle ~half of the screen
-            x0: 0, y0: 0.3, x1: 1, y1: 0.7
-          },
-          endRegion: { // down into the bottom quarter of the screen
-            x0: 0, y0: 0.75, x1: 1, y1: 1
-          },
-          maxTime: 1000 };
-      }
-    }
-  });
 
   return MainController;
 })(Controller);
@@ -5895,7 +6327,7 @@ function unsynthesizeEvent(e) {
 
     identifiers.push(t.identifier);
     xs.push(t.pageX);
-    ys.push(t.pageY);
+    ys.push(t.pageY - 50); // Shift Y position up to remain in-bounds
     rxs.push(t.radiusX);
     rys.push(t.radiusY);
     rs.push(t.rotationAngle);
@@ -5913,6 +6345,12 @@ var ViewSourceController = (function (Controller) {
   };
 
   _extends(ViewSourceController, Controller);
+
+  ViewSourceController.prototype.teardown = function () {
+    this.view = null;
+
+    this.target = null;
+  };
 
   ViewSourceController.prototype.open = function (target) {
     console.log("view source controller open");
@@ -6037,17 +6475,21 @@ var AddonGenerator = (function (Model) {
     this.operations.push("/*=AddonGenerator::remove*/\nel.parentNode.removeChild(el);\n/*==*/");
   };
 
-  AddonGenerator.prototype.opSetAttribute = function (name, value) {
-    this.operations.push("/*=AddonGenerator::setAttribute*/\nel.setAttribute('" + name + "', '" + value + "');\n/*==*/");
+  AddonGenerator.prototype.opCreateAttributes = function (attributes) {
+    for (var expression in attributes) {
+      this.createAttributeHelper(expression, attributes[expression]);
+    }
   };
 
-  AddonGenerator.prototype.opSetProperty = function (name, value) {
-    this.operations.push("/*=AddonGenerator::setProperty*/\nel." + name + " = " + JSON.stringify(value) + ";\n/*==*/");
+  AddonGenerator.prototype.opRemoveAttributes = function (attributes) {
+    for (var expression in attributes) {
+      this.removeAttributeHelper(expression, attributes[expression]);
+    }
   };
 
   AddonGenerator.prototype.opSetProperties = function (properties) {
-    for (var name in properties) {
-      this.setProperty(name, properties[name]);
+    for (var expression in properties) {
+      this.setPropertyHelper(expression, properties[expression]);
     }
   };
 
@@ -6083,6 +6525,24 @@ var AddonGenerator = (function (Model) {
     this.operations.push("/*=AddonGenerator::moveBefore*/\nvar destination = document.querySelector('" + getSelector(destination) + "');\nif (destination && destination.parentNode) {\n  destination.parentNode.insertBefore(el, destination);\n}\n/*==*/");
   };
 
+  AddonGenerator.prototype.createAttributeHelper = function (expression, name) {
+    var assignment = (expression[0] === "[") ? "el" + expression : "el." + expression;
+
+    this.operations.push("/*=AddonGenerator::createAttribute*/\n" + assignment + ".setNamedItem(document.createAttribute(" + JSON.stringify(name) + "));\n/*==*/");
+  };
+
+  AddonGenerator.prototype.removeAttributeHelper = function (expression, name) {
+    var assignment = (expression[0] === "[") ? "el" + expression : "el." + expression;
+
+    this.operations.push("/*=AddonGenerator::removeAttribute*/\n" + assignment + ".removeNamedItem(" + JSON.stringify(name) + ");\n/*==*/");
+  };
+
+  AddonGenerator.prototype.setPropertyHelper = function (expression, value) {
+    var assignment = (expression[0] === "[") ? "el" + expression : "el." + expression;
+
+    this.operations.push("/*=AddonGenerator::setProperty*/\n" + assignment + " = " + JSON.stringify(value) + ";\n/*==*/");
+  };
+
   return AddonGenerator;
 })(Model);
 
@@ -6108,14 +6568,6 @@ function getSpecificSelector(element) {
 
   Array.prototype.forEach.call(element.classList, function (item) {
     selector += "." + item;
-  });
-
-  Array.prototype.forEach.call(element.attributes, function (attr) {
-    if (attr.nodeName.toLowerCase() === "class") {
-      return;
-    }
-
-    selector += "[" + attr.nodeName + "=\"" + attr.nodeValue + "\"]";
   });
 
   return selector;
@@ -6156,7 +6608,7 @@ var AddonMerger = (function (Model) {
   _extends(AddonMerger, Model);
 
   AddonMerger.prototype.merge = function (callback) {
-    var _this18 = this;
+    var _this21 = this;
     if (typeof callback !== "function") {
       return;
     }
@@ -6192,8 +6644,8 @@ var AddonMerger = (function (Model) {
 
         scripts.push(scriptFile.asText());
 
-        if (scripts.length === _this18.blobs.length) {
-          callback(bundle(_this18, scripts.join("\n")));
+        if (scripts.length === _this21.blobs.length) {
+          callback(bundle(_this21, scripts.join("\n")));
         }
       });
     });
@@ -6239,68 +6691,21 @@ var GENERATED_ADDON_COUNT_KEY = "__CUSTOMIZER__generatedAddonCount";
 
 var AddonService = {};
 
-AddonService.getAddons = function (host) {
-  return new Promise(function (resolve, reject) {
-    var request = navigator.mozApps.mgmt.getAll();
-    request.onsuccess = function () {
-      var addons = request.result.filter(function (app) {
-        var manifest = app.manifest || {};
-        if (manifest.role !== "addon") {
-          return false;
-        }
-
-        if (!host) {
-          return true;
-        }
-
-        return !!((manifest.customizations || []).find(function (customization) {
-          return (customization.filter || "").indexOf(host) !== -1;
-        }));
-      });
-
-      resolve(addons);
-    };
-    request.onerror = function () {
-      reject(request);
-    };
-  });
-};
-
-AddonService.getAddon = function (manifestURL) {
-  var _this19 = this;
-  return new Promise(function (resolve, reject) {
-    _this19.getAddons().then(function (addons) {
-      var addon = addons.find(function (addon) {
-        return addon.manifestURL === manifestURL;
-      });
-      if (!addon) {
-        reject();
-        return;
-      }
-
-      resolve(addon);
-    })["catch"](reject);
-  });
-};
-
 AddonService.getGenerator = function (target) {
-  var _this20 = this;
   return new Promise(function (resolve, reject) {
-    _this20.getAddons(window.location.host).then(function (addons) {
-      var number = parseInt(localStorage.getItem(GENERATED_ADDON_COUNT_KEY), 10) || 0;
-      var name = window.prompt("Enter a name for this add-on", "Addon " + (number + 1));
-      if (!name) {
-        reject();
-        return;
-      }
+    var number = parseInt(localStorage.getItem(GENERATED_ADDON_COUNT_KEY), 10) || 0;
+    var name = window.prompt("Enter a name for this add-on", "Addon " + (number + 1));
+    if (!name) {
+      reject();
+      return;
+    }
 
-      var generator = new AddonGenerator({
-        target: target,
-        name: name
-      });
+    var generator = new AddonGenerator({
+      target: target,
+      name: name
+    });
 
-      resolve(generator);
-    })["catch"](reject);
+    resolve(generator);
   });
 };
 
@@ -6318,7 +6723,6 @@ AddonService.generate = function (target, callback) {
 };
 
 AddonService.install = function (blob) {
-  var _this21 = this;
   return new Promise(function (resolve, reject) {
     var activity = new MozActivity({
       name: "import-app",
@@ -6328,15 +6732,10 @@ AddonService.install = function (blob) {
     });
 
     activity.onsuccess = function () {
-      _this21.getAddon(activity.result.manifestURL).then(function (addon) {
-        var number = parseInt(localStorage.getItem(GENERATED_ADDON_COUNT_KEY), 10) || 0;
-        localStorage.setItem(GENERATED_ADDON_COUNT_KEY, number + 1);
+      var number = parseInt(localStorage.getItem(GENERATED_ADDON_COUNT_KEY), 10) || 0;
+      localStorage.setItem(GENERATED_ADDON_COUNT_KEY, number + 1);
 
-        resolve(addon);
-      })["catch"](function (error) {
-        console.error("Unable to get the addon after importing", error);
-        reject(error);
-      });
+      resolve();
     };
 
     activity.onerror = function (error) {
@@ -6348,53 +6747,7 @@ AddonService.install = function (blob) {
 
 /* global View */
 
-var actionMenuViewTemplate = "<customizer-gaia-dialog>\n  <button type=\"button\" data-action=\"viewSource\">View Source</button>\n  <button type=\"button\" data-action=\"edit\">Edit</button>\n  <button type=\"button\" data-action=\"remove\">Remove</button>\n  <button type=\"button\" data-action=\"copyOrMove\">Copy/Move</button>\n  <button type=\"button\" data-action=\"append\">Append Child</button>\n  <button type=\"button\" data-action=\"cancel\">Cancel</button>\n</customizer-gaia-dialog>";
-
-var ActionMenuView = (function (View) {
-  var ActionMenuView = function ActionMenuView(options) {
-    View.call(this, options);
-
-    this.el.className = "fxos-customizer-action-view";
-
-    this.render();
-  };
-
-  _extends(ActionMenuView, View);
-
-  ActionMenuView.prototype.init = function (controller) {
-    var _this22 = this;
-    View.prototype.init.call(this, controller);
-
-    this.dialog = this.$("customizer-gaia-dialog");
-    this.viewSourceButton = this.$("button[data-action=\"viewSource\"]");
-
-    this.on("click", "button", function (evt) {
-      var action = _this22.controller[evt.target.dataset.action];
-      if (typeof action === "function") {
-        action.call(_this22.controller);
-      }
-
-      _this22.dialog.close();
-    });
-  };
-
-  ActionMenuView.prototype.template = function () {
-    return actionMenuViewTemplate;
-  };
-
-  ActionMenuView.prototype.enableViewSource = function (enabled) {
-    // It seems like I ought to be able to just set disabled or hidden
-    // on the element and that should work.  But it doesn't so I'm
-    // manually setting the display style.
-    this.viewSourceButton.style.display = enabled ? "block" : "none";
-  };
-
-  return ActionMenuView;
-})(View);
-
-/* global View */
-
-var appendChildViewTemplate = "\n<style scoped>\n.shadow-host {\n  z-index: 10000001;\n}\n</style>\n<customizer-gaia-dialog-prompt></customizer-gaia-dialog-prompt>\n";
+var appendChildViewTemplate = "\n<style scoped>\n.shadow-host {\n  z-index: 10000001;\n}\n</style>\n<customizer-gaia-dialog-prompt>Enter new element name, e.g. \"div\"</customizer-gaia-dialog-prompt>\n";
 
 var AppendChildView = (function (View) {
   var AppendChildView = function AppendChildView(options) {
@@ -6408,11 +6761,27 @@ var AppendChildView = (function (View) {
   _extends(AppendChildView, View);
 
   AppendChildView.prototype.init = function (controller) {
+    var _this22 = this;
     View.prototype.init.call(this, controller);
 
     this.dialog = this.$("customizer-gaia-dialog-prompt");
-    this.dialog.els.input.placeholder = "New element tagName, e.g. \"div\"";
-    this.dialog.els.submit.addEventListener("click", this._submit.bind(this));
+
+    // Automatically set focus to the input box when the
+    // <customizer-gaia-dialog-prompt> is opened.
+    this.dialog.addEventListener("opened", function () {
+      _this22.dialog.els.input.focus();
+    });
+
+    // Reset the <customizer-gaia-dialog-prompt> value when closed.
+    this.dialog.addEventListener("closed", function () {
+      _this22.dialog.els.input.value = "";
+    });
+
+    // Submit the new element tag name when the
+    // <customizer-gaia-dialog-prompt> is submitted.
+    this.dialog.els.submit.addEventListener("click", function () {
+      _this22.controller.submit(_this22.dialog.els.input.value);
+    });
   };
 
   AppendChildView.prototype.template = function () {
@@ -6423,16 +6792,12 @@ var AppendChildView = (function (View) {
     this.dialog.open();
   };
 
-  AppendChildView.prototype._submit = function (e) {
-    this.controller.submit(this.dialog.els.input.value); // tagName
-  };
-
   return AppendChildView;
 })(View);
 
 /* global View */
 
-var copyMoveViewTemplate = "<customizer-gaia-modal>\n  <customizer-gaia-header>\n    <button type=\"button\" data-action=\"cancel\">Cancel</button>\n    <h1>Copy/Move</h1>\n    <button type=\"button\" data-action=\"select\">Select</button>\n  </customizer-gaia-header>\n  <customizer-gaia-tabs selected=\"0\">\n    <a href=\"#\" data-mode=\"Copy\">Copy</a>\n    <a href=\"#\" data-mode=\"Move\">Move</a>\n  </customizer-gaia-tabs>\n  <section>\n    <customizer-gaia-dom-tree></customizer-gaia-dom-tree>\n  </section>\n  <customizer-gaia-dialog>\n    <button type=\"button\" data-action=\"before\">Insert Before</button>\n    <button type=\"button\" data-action=\"after\">Insert After</button>\n    <button type=\"button\" data-action=\"prepend\">Prepend</button>\n    <button type=\"button\" data-action=\"append\">Append</button>\n  </customizer-gaia-dialog>\n</customizer-gaia-modal>";
+var copyMoveViewTemplate = "<customizer-gaia-modal>\n  <customizer-gaia-header>\n    <button type=\"button\" data-action=\"cancel\">Cancel</button>\n    <h1>Copy/Move</h1>\n    <button type=\"button\" data-action=\"select\">Select</button>\n  </customizer-gaia-header>\n  <customizer-gaia-tabs selected=\"0\">\n    <a href=\"#\" data-mode=\"Copy\">Copy</a>\n    <a href=\"#\" data-mode=\"Move\">Move</a>\n  </customizer-gaia-tabs>\n  <section>\n    <customizer-gaia-dom-tree></customizer-gaia-dom-tree>\n  </section>\n  <customizer-gaia-dialog>\n    <button type=\"button\" data-action=\"before\">Insert Before</button>\n    <button type=\"button\" data-action=\"after\">Insert After</button>\n    <button type=\"button\" data-action=\"prepend\">Prepend</button>\n    <button type=\"button\" data-action=\"append\">Append</button>\n    <button type=\"button\" on-click=\"close\">Cancel</button>\n  </customizer-gaia-dialog>\n</customizer-gaia-modal>";
 
 var CopyMoveView = (function (View) {
   var CopyMoveView = function CopyMoveView(options) {
@@ -6484,7 +6849,7 @@ var CopyMoveView = (function (View) {
 /* global esprima */
 /* global html_beautify */
 
-var editViewTemplate = "<customizer-gaia-modal>\n  <style scoped>\n    .customizer-gaia-modal {\n      background: var(--background, #fff);\n      display: none;\n      position: fixed;\n      top: 0;\n      left: 0;\n      width: 100%;\n      height: 100%;\n    }\n    .customizer-gaia-modal.active {\n      display: block;\n    }\n    .tab-pane {\n      box-sizing: padding-box;\n      display: none;\n      position: absolute;\n      top: 96px;\n      bottom: 0;\n      left: 0;\n      width: 100%;\n      height: auto;\n    }\n    .tab-pane.active {\n      display: block;\n    }\n    textarea,\n    input {\n      -moz-user-select: text !important;\n    }\n    customizer-gaia-property-inspector {\n      --background: #000;\n      --header-background: #000;\n    }\n    textarea,\n    customizer-gaia-tabs,\n    .tab-pane {\n      background: #000;\n      color: #fff;\n    }\n    fxos-code-editor {\n      display: block;\n      width: 100%;\n      height: 100%;\n    }\n    .errors {\n      background: #e51e1e;\n      color: #fff;\n      position: absolute;\n      bottom: 0;\n      left: 0;\n      width: 100%;\n      height: 20px;\n      overflow: hidden;\n      z-index: 2;\n      opacity: 0;\n      transition: opacity 0.2s ease;\n      pointer-events: none;\n    }\n    .errors.active {\n      opacity: 1;\n    }\n    .errors.active + fxos-code-editor {\n      height: calc(100% - 20px);\n    }\n  </style>\n  <customizer-gaia-header>\n    <button data-action=\"cancel\" data-icon=\"close\"></button>\n    <h1>Edit</h1>\n    <button data-action=\"save\">Save</button>\n  </customizer-gaia-header>\n  <customizer-gaia-tabs selected=\"0\">\n    <a href=\"#\">HTML</a>\n    <a href=\"#\">Script</a>\n    <a href=\"#\">Attributes</a>\n    <a href=\"#\">Properties</a>\n  </customizer-gaia-tabs>\n  <section class=\"tab-pane active\" data-id=\"html\">\n    <fxos-code-editor></fxos-code-editor>\n  </section>\n  <section class=\"tab-pane\" data-id=\"script\">\n    <div class=\"errors\"></div>\n    <fxos-code-editor></fxos-code-editor>\n  </section>\n  <section class=\"tab-pane\" data-id=\"attributes\">\n    <customizer-gaia-property-inspector root-property=\"attributes\" data-textarea=\"textarea\"></customizer-gaia-property-inspector>\n  </section>\n  <section class=\"tab-pane\" data-id=\"properties\">\n    <customizer-gaia-property-inspector data-textarea=\"textarea\"></customizer-gaia-property-inspector>\n  </section>\n</customizer-gaia-modal>";
+var editViewTemplate = "<customizer-gaia-modal>\n  <style scoped>\n    .customizer-gaia-modal {\n      background: var(--background, #fff);\n      display: none;\n      position: fixed;\n      top: 0;\n      left: 0;\n      width: 100%;\n      height: 100%;\n    }\n    .customizer-gaia-modal.active {\n      display: block;\n    }\n    .tab-pane {\n      box-sizing: border-box;\n      display: none;\n      position: absolute;\n      top: 96px;\n      bottom: 0;\n      left: 0;\n      width: 100%;\n      height: auto;\n    }\n    .tab-pane.active {\n      display: block;\n    }\n    textarea,\n    input {\n      -moz-user-select: text !important;\n    }\n    textarea,\n    customizer-gaia-tabs,\n    .tab-pane {\n      background: #000;\n      color: #fff;\n    }\n    fxos-code-editor {\n      display: block;\n      width: 100%;\n      height: 100%;\n    }\n    .errors {\n      background: #e51e1e;\n      color: #fff;\n      position: absolute;\n      bottom: 0;\n      left: 0;\n      width: 100%;\n      height: 20px;\n      overflow: hidden;\n      z-index: 2;\n      opacity: 0;\n      transition: opacity 0.2s ease;\n      pointer-events: none;\n    }\n    .errors.active {\n      opacity: 1;\n    }\n    .errors.active + fxos-code-editor {\n      height: calc(100% - 20px);\n    }\n  </style>\n  <customizer-gaia-header>\n    <button aria-hidden=\"true\" data-action=\"cancel\" data-icon=\"close\"></button>\n    <h1>Edit</h1>\n    <button data-action=\"save\">Save</button>\n  </customizer-gaia-header>\n  <customizer-gaia-tabs selected=\"0\">\n    <a href=\"#\">HTML</a>\n    <a href=\"#\">Script</a>\n    <a href=\"#\">Properties</a>\n  </customizer-gaia-tabs>\n  <section class=\"tab-pane active\" data-id=\"html\">\n    <fxos-code-editor></fxos-code-editor>\n  </section>\n  <section class=\"tab-pane\" data-id=\"script\">\n    <div class=\"errors\"></div>\n    <fxos-code-editor></fxos-code-editor>\n  </section>\n  <section class=\"tab-pane\" data-id=\"properties\">\n    <fxos-inspector></fxos-inspector>\n  </section>\n</customizer-gaia-modal>";
 
 var EditView = (function (View) {
   var EditView = function EditView(options) {
@@ -6507,8 +6872,7 @@ var EditView = (function (View) {
 
     this.htmlCodeEditor = this.$("section[data-id=\"html\"] > fxos-code-editor");
     this.scriptCodeEditor = this.$("section[data-id=\"script\"] > fxos-code-editor");
-    this.attributeInspector = this.$("section[data-id=\"attributes\"] > customizer-gaia-property-inspector");
-    this.propertyInspector = this.$("section[data-id=\"properties\"] > customizer-gaia-property-inspector");
+    this.propertyInspector = this.$("section[data-id=\"properties\"] > fxos-inspector");
 
     this.scriptErrors = this.$("section[data-id=\"script\"] > .errors");
 
@@ -6552,16 +6916,25 @@ var EditView = (function (View) {
       _this23.validateScriptTimeout = setTimeout(_this23.validateScript.bind(_this23), 2000);
     });
 
-    this.on("save", "customizer-gaia-property-inspector", function (evt) {
-      var keyPath = [];
-      var parts = evt.detail.path.substr(1).split("/");
-      parts.forEach(function (part) {
-        return keyPath.push(part);
-      });
-      keyPath = keyPath.join(".");
+    this.propertyInspector.addEventListener("createattribute", function (evt) {
+      var detail = JSON.parse(evt.detail);
+
+      _this23.controller.changes.createAttributes = _this23.controller.changes.createAttributes || {};
+      _this23.controller.changes.createAttributes[detail.expression] = detail.name;
+    });
+
+    this.propertyInspector.addEventListener("removeattribute", function (evt) {
+      var detail = JSON.parse(evt.detail);
+
+      _this23.controller.changes.removeAttributes = _this23.controller.changes.removeAttributes || {};
+      _this23.controller.changes.removeAttributes[detail.expression] = detail.name;
+    });
+
+    this.propertyInspector.addEventListener("save", function (evt) {
+      var detail = JSON.parse(evt.detail);
 
       _this23.controller.changes.properties = _this23.controller.changes.properties || {};
-      _this23.controller.changes.properties[keyPath] = evt.detail.newValue;
+      _this23.controller.changes.properties[detail.expression] = detail.value;
     });
 
     this.el.addEventListener("contextmenu", function (evt) {
@@ -6582,16 +6955,23 @@ var EditView = (function (View) {
   };
 
   EditView.prototype.setTarget = function (target) {
+    var _this24 = this;
     var clonedTarget = target.cloneNode(true);
-    var html = html_beautify(clonedTarget.innerHTML.trim(), {
-      indent_size: 2
-    });
+    var html = clonedTarget.innerHTML.trim();
 
-    this.htmlCodeEditor.value = html;
-    this.scriptCodeEditor.value = "/**\n * You can edit a script to be inserted\n * in the generated add-on here.\n *\n * Globals:\n *   selector [String]\n *   el       [HTMLElement]\n *   mo       [MutationObserver]\n */\n\n //el.addEventListener('click', function(evt) {\n //  alert('Clicked!');\n //});\n";
+    this.htmlCodeEditor.value = "Loading...";
 
-    this.attributeInspector.set(clonedTarget);
-    this.propertyInspector.set(clonedTarget);
+    setTimeout(function () {
+      html = html_beautify(html, {
+        indent_size: 2
+      });
+
+      _this24.htmlCodeEditor.value = html;
+    }, 1);
+
+    this.scriptCodeEditor.value = "/**\n * You can edit a script to be inserted\n * in the generated add-on here.\n *\n * Globals:\n *   selector [String]\n *   el       [HTMLElement]\n *   mo       [MutationObserver]\n */\n\n//el.addEventListener('click', function(evt) {\n//  alert('Clicked!');\n//});\n";
+
+    this.propertyInspector.setRootTarget(clonedTarget);
   };
 
   EditView.prototype.validateScript = function () {
@@ -6620,7 +7000,10 @@ var EditView = (function (View) {
 
 /* global View */
 
-var mainViewTemplate = "<style scoped>\n  .fxos-customizer-main-view {\n    font-size: 14px;\n\n    /** Grey Colors\n     ---------------------------------------------------------*/\n\n    --color-alpha: #333333;\n    --color-beta: #ffffff;\n    --color-gamma: #4d4d4d;\n    --color-delta: #5f5f5f;\n    --color-epsilon: #858585;\n    --color-zeta: #a6a6a6;\n    --color-eta: #c7c7c7;\n    --color-theta: #e7e7e7;\n    --color-iota: #f4f4f4;\n\n  /** Brand Colors\n   ---------------------------------------------------------*/\n\n    --color-darkblue: #00539f;\n    --color-blue: #00caf2;\n    --color-turquoise: #27c8c2;\n    --color-darkorange: #e66000;\n    --color-orange: #ff9500;\n    --color-yellow: #ffcb00;\n    --color-violet: #c40c84;\n\n    --color-warning: #fbbd3c;\n    --color-destructive: #e2443a;\n    --color-preffered: #00ba91;\n\n    /** Background\n     ---------------------------------------------------------*/\n\n    --background: var(--color-alpha);\n    --background-plus: var(--color-gamma);\n    --background-minus: #2B2B2B;\n    --background-minus-minus: #1a1a1a;\n\n    /** Borders\n     ---------------------------------------------------------*/\n\n    --border-color: var(--color-gamma);\n\n    /** Highlight Color\n     ---------------------------------------------------------*/\n\n    --highlight-color: var(--color-blue);\n\n    /** Text Color\n     ---------------------------------------------------------*/\n\n    --text-color: var(--color-beta);\n    --text-color-minus: var(--color-eta);\n\n    /** Button\n     ---------------------------------------------------------*/\n\n    --button-background: var(--background-plus);\n\n    /** Links\n     ---------------------------------------------------------*/\n\n    --link-color: var(--highlight-color);\n\n    /** Inputs\n     ---------------------------------------------------------*/\n\n    --input-background: var(--background-plus);\n    --input-color: var(--color-alpha);\n    --input-clear-background: #909ca7;\n\n    /** Buttons\n     ---------------------------------------------------------*/\n\n     --button-box-shadow: none;\n     --button-box-shadow-active: none;\n\n    /** Header\n     ---------------------------------------------------------*/\n\n    --header-background: var(--background);\n    --header-icon-color: var(--text-color);\n    --header-button-color: var(--highlight-color);\n    --header-disabled-button-color: rgba(255,255,255,0.3);\n\n    /** Text Input\n     ---------------------------------------------------------*/\n\n    --text-input-background: var(--background-minus);\n\n    /** Switch\n     ---------------------------------------------------------*/\n\n    --switch-head-border-color: var(--background-minus-minus);\n    --switch-background: var(--background-minus-minus);\n\n    /** Checkbox\n     ---------------------------------------------------------*/\n\n    --checkbox-border-color: var(--background-minus-minus);\n  }\n\n  div.fxos-customizer-container {\n    background-color: var(--background);\n    position: fixed;\n    left: 0;\n    right: 0;\n    top: 100%; /* off-screen by default, animated translate to show and hide */\n    height: 50vh;\n    border-top: 1px solid #ccc;\n    /*\n     * this needs to go on top of the regular app, but below\n     * customizer-gaia-modal and customizer-gaia-dialog which we override elsewhere.\n     */\n    z-index: 10000000;\n\n    /* We show and hide this with an animated transform */\n    transition: transform 150ms;\n  }\n\n  /*\n   * Add this show class to animate the container onto the screen,\n   * and remove it to animate the container off.\n   */\n  .fxos-customizer-container.show {\n    transform: translateY(-100%);\n  }\n</style>\n<style>\n/*\n * These styles need to be applied globally to the app when the customizer\n * is displayed so that the user can scroll to see all of the app even\n * with the customizer taking up the bottom half of the screen.\n *\n * Note that this stylesheet is not scoped and is disabled by default.\n */\nhtml, body {\n  overflow-y: initial !important;\n}\n\nbody {\n  padding-bottom: 50vh !important;\n}\n</style>\n<div class=\"fxos-customizer-container\"><fxos-customizer></fxos-customizer></div>\n<div class=\"fxos-customizer-child-views\">\n<fxos-customizer-highlighter></fxos-customizer-highlighter>\n</div>";
+/* global AddonService */
+
+/* jshint maxlen:false */
+var mainViewTemplate = "<style>\n  @font-face {\n    font-family: \"customizer-gaia-icons\";\n    src: url(\"data:application/x-font-ttf;charset=utf-8;base64,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ASgBKQEqASsBLAEtAS4BLwEwATEBMgEzATQBNQE2ATcBOAE5AToBOwE8AT0BPgE/AUABQQFCAUMBRAFFAUYBRwFIAUkBSgFLAUwBTQFOAU8BUAFRAVIBUwFUAVUBVgFXAVgBWQFaAVsBXAFdAV4BXwFgAWEBYgFjAWQBZQFmAWcBaAFpAWoBawFsAW0BbgFvAXABcQFyAXMBdAF1AXYBdwF4AXkBegF7AXwBfQF+AX8BgAGBAYIBgwGEAYUA7wGGAYcBiAGJAYoBiwBSAYwBjQGOAY8BkAGRAZIBkwGUAZUBlgGXAZgBmQGaAZsBnAGdAZ4BnwGgAaEBogGjAaQBpQGmAacBqAGpAaoBqwGsAa0BrgGvAbABsQGyAbMBtAG1AbYBtwG4AbkBugG7AbwBvQG+Ab8BwAHBAcIBwwHEAcUBxgHHAcgByQHKAcsBzAHNAc4BzwHQAdEB0gHTAdQB1QEtATABMQEyATMBNAE1ATYBNwE4ATkCMmcCM2cCNGcNYWNjZXNzaWJpbGl0eQthZGQtY29udGFjdANhZGQGYWRkb25zCGFpcnBsYW5lC2FsYXJtLWNsb2NrCmFsYXJtLXN0b3AFYWxhcm0FYWxidW0HYWxsLWRheQphcnJvdy1iYWNrDWFycm93LWZvcndhcmQGYXJ0aXN0CmF0dGFjaG1lbnQKYmFjay1saWdodARiYWNrCWJhdHRlcnktMAliYXR0ZXJ5LTEKYmF0dGVyeS0xMAliYXR0ZXJ5LTIJYmF0dGVyeS0zCWJhdHRlcnktNAliYXR0ZXJ5LTUJYmF0dGVyeS02CWJhdHRlcnktNwliYXR0ZXJ5LTgJYmF0dGVyeS05EGJhdHRlcnktY2hhcmdpbmcPYmF0dGVyeS11bmtub3duDmJsdWV0b290aC1hMmRwEGJsdWV0b290aC1jaXJjbGUZYmx1ZXRvb3RoLXRyYW5zZmVyLWNpcmNsZRJibHVldG9vdGgtdHJhbnNmZXIJYmx1ZXRvb3RoCmJyaWdodG5lc3MIYnJvd3NpbmcDYnVnCGNhbGVuZGFyDmNhbGwtYmx1ZXRvb3RoDmNhbGwtZW1lcmdlbmN5D2NhbGwtZm9yd2FyZGluZwxjYWxsLWhhbmctdXAJY2FsbC1ob2xkDWNhbGwtaW5jb21pbmcKY2FsbC1tZXJnZQtjYWxsLW1pc3NlZA1jYWxsLW91dGdvaW5nDWNhbGwtcmV2ZXJzZWQMY2FsbC1yaW5naW5nBGNhbGwSY2FsbGJhY2stZW1lcmdlbmN5BmNhbWVyYRBjaGFuZ2Utd2FsbHBhcGVyC2NsZWFyLWlucHV0BWNsb3NlB2NvbXBvc2UMY29udGFjdC1maW5kCGNvbnRhY3RzB2NyYXNoZWQEY3JvcARkYXRhBmRlbGV0ZQlkZXZlbG9wZXILZGV2aWNlLWluZm8HZGlhbHBhZBBkaXNtaXNzLWtleWJvYXJkDGRvLW5vdC10cmFjaw9kb3dubG9hZC1jaXJjbGUIZG93bmxvYWQEZWRnZQxlZGl0LWNvbnRhY3QKZWRpdC1pbWFnZQRlZGl0DWVtYWlsLWZvcndhcmQPZW1haWwtbWFyay1yZWFkEWVtYWlsLW1hcmstdW5yZWFkCmVtYWlsLW1vdmULZW1haWwtcmVwbHkFZW1haWwLZXhjbGFtYXRpb24GZXhwYW5kCGZhY2Vib29rCGZlZWRiYWNrBGZpbmQHZmlyZWZveARmbGFnCmZsYXNoLWF1dG8JZmxhc2gtb2ZmCGZsYXNoLW9uDGZvY3VzLWxvY2tlZA1mb2N1cy1sb2NraW5nDWZvcndhcmQtbGlnaHQHZm9yd2FyZAdnZXN0dXJlBWdtYWlsDWdyaWQtY2lyY3VsYXIEZ3JpZANnc20JaGRyLWJveGVkA2hkcgpoZWFkcGhvbmVzBGhlbHAKaG9tZXNjcmVlbgloc3BhLXBsdXMEaHNwYRhpbXBvcnQtbWVtb3J5Y2FyZC1jaXJjbGUMaW5jb21pbmctc21zBGluZm8Pa2V5Ym9hcmQtY2lyY2xlCGtleWJvYXJkCWxhbmd1YWdlcwRsaW5rCGxvY2F0aW9uBGxvY2sNbWVkaWEtc3RvcmFnZQRtZW51CG1lc3NhZ2VzA21pYwRtb29uBG1vcmUEbXV0ZQNuZmMGbm8tc2ltDW5vdGlmaWNhdGlvbnMMb3V0Z29pbmctc21zB291dGxvb2sFcGF1c2UMcGljdHVyZS1zaXplC3BsYXktY2lyY2xlBHBsYXkIcGxheWxpc3QHcHJpdmFjeQxyZWNlbnQtY2FsbHMGcmVsb2FkC3JlcGVhdC1vbmNlBnJlcGVhdAlyZXBseS1hbGwGcm9ja2V0BnJvdGF0ZQVzY2VuZQdzZC1jYXJkBnNlYXJjaAlzZWVrLWJhY2sMc2Vlay1mb3J3YXJkBnNlbGVjdApzZWxmLXRpbWVyBHNlbmQIc2V0dGluZ3MFc2hhcmUHc2h1ZmZsZQhzaWduYWwtMAhzaWduYWwtMQhzaWduYWwtMghzaWduYWwtMwhzaWduYWwtNAhzaWduYWwtNQ5zaWduYWwtcm9hbWluZwtzaW0tdG9vbGtpdANzaW0Jc2tpcC1iYWNrDHNraXAtZm9yd2FyZAVzb25ncwlzb3VuZC1tYXgJc291bmQtbWluCnN0YXItZW1wdHkJc3Rhci1mdWxsBHN0b3AOc3RvcmFnZS1jaXJjbGUHc3RvcmFnZQZzd2l0Y2gEc3luYwl0ZXRoZXJpbmcGdGhlbWVzC3RpY2stY2lyY2xlBHRpY2sEdGltZRN0b2dnbGUtY2FtZXJhLWZyb250EnRvZ2dsZS1jYW1lcmEtcmVhcg90b3B1cC13aXRoLWNvZGUFdG9wdXAHdHdpdHRlcg11bmRvLWNpcmN1bGFyBHVuZG8GdW5sb2NrDnVwZGF0ZS1iYWxhbmNlA3VzYgR1c2VyB3ZpYnJhdGUJdmlkZW8tbWljCnZpZGVvLXNpemUFdmlkZW8Jdm9pY2VtYWlsCXdhbGxwYXBlcgZ3aWZpLTEGd2lmaS0yBndpZmktMwZ3aWZpLTQQd2lmaS1wZXJtaXNzaW9ucwAAAAAB//8AAgABAAAADgAAAB4AAAAAAAIAAgADACUAAQAmAPAAAgAEAAAAAgAAAAAAAQAAAAoAHgAsAAFsYXRuAAgABAAAAAD//wABAAAAAWxpZ2EACAAAAAEAAAABAAQABAAAAAEACAABEV4AGAA2AEAASgBUAXoDyAYKBuAH/gj+CVQJ1AoyCmoKrgsqC2QLmgwSDKAPHBAKEHwQ4gABAAQAJgACABQAAQAEACcAAgAUAAEABAAoAAIAFAAOAB4AOgBWAG4AhgCcALIAyADaAOoA+AEGARIBHgA0AA0AHQAdABsAIgADABMAGwAdACIADgAdABEAKQANABAAEAASAB4AHgAWAA8AFgAYABYAHwAkACoACwARABEAAwAQABsAGgAfAA4AEAAfAC4ACwAYAA4AHQAZAAMAEAAYABsAEAAXADYACgAfAB8ADgAQABUAGQASABoAHwAzAAoAHQAdABsAIgADAA8ADgAQABcALwAKABgADgAdABkAAwAeAB8AGwAcAC0ACAAWAB0AHAAYAA4AGgASADIABwAYABgAAwARAA4AJAA1AAYAHQAfABYAHgAfACwABgARABEAGwAaAB4AMQAFABgADwAgABkAMAAFABgADgAdABkAKwADABEAEQAXADAAZACKAKwAzgDuAQwBIgE4AU4BYgF2AYoBngGyAcYB2gHuAgICFgIqAjwCRgBIABkAGAAgABIAHwAbABsAHwAVAAMAHwAdAA4AGgAeABMAEgAdAAMAEAAWAB0AEAAYABIASQASABgAIAASAB8AGwAbAB8AFQADAB8AHQAOABoAHgATABIAHQBHABAAGAAgABIAHwAbABsAHwAVAAMAEAAWAB0AEAAYABIARAAQAA4AHwAfABIAHQAkAAMAEAAVAA4AHQAUABYAGgAUAEUADwAOAB8AHwASAB0AJAADACAAGgAXABoAGwAiABoARgAOABgAIAASAB8AGwAbAB8AFQADAA4ABgARABwASwAKAB0AFgAUABUAHwAaABIAHgAeADsACgAOAB8AHwASAB0AJAADAAUABAA3AAoADgAQABcAAwAYABYAFAAVAB8AQgAJAA4AHwAfABIAHQAkAAMADABBAAkADgAfAB8AEgAdACQAAwALAEAACQAOAB8AHwASAB0AJAADAAoAPwAJAA4AHwAfABIAHQAkAAMACQA+AAkADgAfAB8AEgAdACQAAwAIAD0ACQAOAB8AHwASAB0AJAADAAcAPAAJAA4AHwAfABIAHQAkAAMABgBKAAkAGAAgABIAHwAbABsAHwAVADoACQAOAB8AHwASAB0AJAADAAUAOQAJAA4AHwAfABIAHQAkAAMABABDAAkADgAfAB8AEgAdACQAAwANAEwACAAdABsAIgAeABYAGgAUADgABAAOABAAFwBNAAMAIAAUABcAMABWAHgAmAC2ANQA8AEMASgBQgFcAXYBjgGmAbwB0AHiAfQCBAIUAiICLgI4AFsAEgAOABgAGAAPAA4AEAAXAAMAEgAZABIAHQAUABIAGgAQACQAXQAQABUADgAaABQAEgADACIADgAYABgAHAAOABwAEgAdAFEADwAOABgAGAADABMAGwAdACIADgAdABEAFgAaABQAUAAOAA4AGAAYAAMAEgAZABIAHQAUABIAGgAQACQATwAOAA4AGAAYAAMADwAYACAAEgAfABsAGwAfABUAWAANAA4AGAAYAAMAHQASACEAEgAdAB4AEgARAFcADQAOABgAGAADABsAIAAfABQAGwAWABoAFABUAA0ADgAYABgAAwAWABoAEAAbABkAFgAaABQAWQAMAA4AGAAYAAMAHQAWABoAFAAWABoAFABhAAwAGwAaAB8ADgAQAB8AAwATABYAGgARAFIADAAOABgAGAADABUADgAaABQAAwAgABwAVgALAA4AGAAYAAMAGQAWAB4AHgASABEAXgALABgAEgAOAB0AAwAWABoAHAAgAB8AVQAKAA4AGAAYAAMAGQASAB0AFAASAFMACQAOABgAGAADABUAGwAYABEAYgAIABsAGgAfAA4AEAAfAB4ATgAIAA4AGAASABoAEQAOAB0AYAAHABsAGQAcABsAHgASAGMABwAdAA4AHgAVABIAEQBcAAYADgAZABIAHQAOAF8ABQAYABsAHgASAGQABAAdABsAHABaAAQADgAYABgACQAUADYAVgBwAIgAnACuAL4AzABqABAAFgAeABkAFgAeAB4AAwAXABIAJAAPABsADgAdABEAbAAPABsAIgAaABgAGwAOABEAAwAQABYAHQAQABgAEgBrAAwAGwADABoAGwAfAAMAHwAdAA4AEAAXAGgACwASACEAFgAQABIAAwAWABoAEwAbAGcACQASACEAEgAYABsAHAASAB0AbQAIABsAIgAaABgAGwAOABEAaQAHABYADgAYABwADgARAGYABgASABgAEgAfABIAZQAEAA4AHwAOAAwAGgA+AF4AegCUAKwAxADaAPAA/gEKARQAdAARABkADgAWABgAAwAZAA4AHQAXAAMAIAAaAB0AEgAOABEAcwAPABkADgAWABgAAwAZAA4AHQAXAAMAHQASAA4AEQByAA0AGQAOABYAGAADABMAGwAdACIADgAdABEAbwAMABEAFgAfAAMAEAAbABoAHwAOABAAHwB4AAsAIwAQABgADgAZAA4AHwAWABsAGgB2AAsAGQAOABYAGAADAB0AEgAcABgAJABwAAoAEQAWAB8AAwAWABkADgAUABIAdQAKABkADgAWABgAAwAZABsAIQASAHkABgAjABwADgAaABEAdwAFABkADgAWABgAcQAEABEAFgAfAG4ABAARABQAEgAMABoANgBSAGwAggCWAKgAugDMANwA7AD2AIQADQAbAB0AIgAOAB0AEQADABgAFgAUABUAHwCDAA0AGwAQACAAHgADABgAGwAQABcAFgAaABQAggAMABsAEAAgAB4AAwAYABsAEAAXABIAEQB/AAoAGAAOAB4AFQADAA4AIAAfABsAgAAJABgADgAeABUAAwAbABMAEwCBAAgAGAAOAB4AFQADABsAGgB7AAgAEgASABEADwAOABAAFwB6AAgADgAQABIADwAbABsAFwCFAAcAGwAdACIADgAdABEAfQAHABYAHQASABMAGwAjAH4ABAAYAA4AFAB8AAQAFgAaABEABQAMACgAOABEAE4AiAANAB0AFgARAAMAEAAWAB0AEAAgABgADgAdAIYABwASAB4AHwAgAB0AEgCHAAUAGQAOABYAGACJAAQAHQAWABEAigADAB4AGQAHABAAJgA8AFAAZABuAHgAjwAKABsAGQASAB4AEAAdABIAEgAaAI0ACgASAA4AEQAcABUAGwAaABIAHgCQAAkAHgAcAA4AAwAcABgAIAAeAIsACQARAB0AAwAPABsAIwASABEAkQAEAB4AHAAOAI4ABAASABgAHACMAAMAEQAdAAMACAA6AFQAkgAYABkAHAAbAB0AHwADABkAEgAZABsAHQAkABAADgAdABEAAwAQABYAHQAQABgAEgCTAAwAGgAQABsAGQAWABoAFAADAB4AGQAeAJQABAAaABMAGwACAAYAJgCVAA8AEgAkAA8AGwAOAB0AEQADABAAFgAdABAAGAASAJYACAASACQADwAbAA4AHQARAAQACgAeADAAOgCXAAkADgAaABQAIAAOABQAEgAeAJkACAAbABAADgAfABYAGwAaAJgABAAWABoAFwCaAAQAGwAQABcACAASAC4AQABMAFYAYABqAHQAmwANABIAEQAWAA4AAwAeAB8AGwAdAA4AFAASAJ0ACAASAB4AHgAOABQAEgAeAJ8ABQAWABoAIAAeAKIABAAgAB8AEgChAAQAGwAdABIAnAAEABIAGgAgAKAABAAbABsAGgCeAAMAFgAQAAMACAAkADIApQANABsAHwAWABMAFgAQAA4AHwAWABsAGgAeAKQABgAbAAMAHgAWABkAowADABMAEAADAAgAIgAyAKcADAAgAB8AFAAbABYAGgAUAAMAHgAZAB4AqAAHACAAHwAYABsAGwAXAKYAAQAGAA4AKABAAFIAYgBuAKoADAAWABAAHwAgAB0AEgADAB4AFgAlABIAqwALABgADgAkAAMAEAAWAB0AEAAYABIArQAIABgADgAkABgAFgAeAB8ArgAHAB0AFgAhAA4AEAAkAKkABQAOACAAHgASAKwABAAYAA4AJAAHABAAKgBCAFYAZAByAIAArwAMABIAEAASABoAHwADABAADgAYABgAHgCxAAsAEgAcABIADgAfAAMAGwAaABAAEgCzAAkAEgAcABgAJAADAA4AGAAYALIABgASABwAEgAOAB8AtAAGABsAEAAXABIAHwCwAAYAEgAYABsADgARALUABgAbAB8ADgAfABIAIABCAGAAfgCYALIAygDgAPYBCgEeATIBRgFaAWwBfgGQAaIBtAHGAdgB6AH4AggCFgIkAjICPgJKAlYCYAJqAnQA0gAOAB8AGwAdAA4AFAASAAMAEAAWAB0AEAAYABIAxwAOABYAFAAaAA4AGAADAB0AGwAOABkAFgAaABQAywAMABcAFgAcAAMAEwAbAB0AIgAOAB0AEQC6AAwAEgASABcAAwATABsAHQAiAA4AHQARAMgACwAWABkAAwAfABsAGwAYABcAFgAfALwACgASABgAEwADAB8AFgAZABIAHQDPAAoAHwAOAB0AAwASABkAHAAfACQAzgAJABsAIAAaABEAAwAZABYAGgDNAAkAGwAgABoAEQADABkADgAjANAACQAfAA4AHQADABMAIAAYABgAygAJABcAFgAcAAMADwAOABAAFwC5AAkAEgASABcAAwAPAA4AEAAXAMMACAAWABQAGgAOABgAAwAGAMIACAAWABQAGgAOABgAAwAFAMEACAAWABQAGgAOABgAAwAEAL4ACAASAB8AHwAWABoAFAAeAMYACAAWABQAGgAOABgAAwAJAMUACAAWABQAGgAOABgAAwAIAMQACAAWABQAGgAOABgAAwAHANMABwAfABsAHQAOABQAEgDAAAcAFQAgABMAEwAYABIAtwAHABEAAwAQAA4AHQARALsABgASABgAEgAQAB8AuAAGABIADgAdABAAFQDUAAYAIgAWAB8AEAAVAL8ABQAVAA4AHQASAMwABQAbABoAFAAeALYABQAQABIAGgASANEABAAfABsAHAC9AAQAEgAaABEA1QAEACQAGgAQAMkAAwAWABkACgAWAD4AZACEAJwAsADAAM4A2gDkANsAEwAbABQAFAAYABIAAwAQAA4AGQASAB0ADgADABMAHQAbABoAHwDcABIAGwAUABQAGAASAAMAEAAOABkAEgAdAA4AAwAdABIADgAdAN0ADwAbABwAIAAcAAMAIgAWAB8AFQADABAAGwARABIA2AALABYAEAAXAAMAEAAWAB0AEAAYABIA1gAJABIAHwAVABIAHQAWABoAFADfAAcAIgAWAB8AHwASAB0A1wAGABUAEgAZABIAHgDeAAUAGwAcACAAHADZAAQAFgAQABcA2gAEABYAGQASAAYADgAsAEgAVgBgAGoA4wAOABwAEQAOAB8AEgADAA8ADgAYAA4AGgAQABIA4AANABoAEQAbAAMAEAAWAB0AEAAgABgADgAdAOIABgAaABgAGwAQABcA4QAEABoAEQAbAOUABAAeABIAHQDkAAMAHgAPAAUADAAiADYASgBaAOgACgAWABEAEgAbAAMAHgAWACUAEgDqAAkAGwAWABAAEgAZAA4AFgAYAOcACQAWABEAEgAbAAMAGQAWABAA5gAHABYADwAdAA4AHwASAOkABQAWABEAEgAbAAYADgAwAEQAUgBgAG4A8AAQABYAEwAWAAMAHAASAB0AGQAWAB4AHgAWABsAGgAeAOsACQAOABgAGAAcAA4AHAASAB0A7gAGABYAEwAWAAMABwDtAAYAFgATABYAAwAGAOwABgAWABMAFgADAAUA7wAGABYAEwAWAAMACAACAAIABgAIAAAADgAiAAMAAAABAAAACgAeADQAAWxhdG4ACAAEAAAAAP//AAEAAAABc2l6ZQAIAAQAAACgAAAAAAAAAAAAAAAAAAAAAQAAAADMPaLPAAAAANETpOQAAAAA0ROk5A==\") format(\"truetype\");\n    font-weight: 500;\n    font-style: normal;\n  }\n  @font-face {\n    font-family: \"customizer-icons\";\n    src: url(\"data:application/x-font-ttf;charset=utf-8;base64,AAEAAAAMAIAAAwBAR1NVQtrO3cQAAADMAAAAsk9TLzIPEgLbAAABgAAAAGBjbWFw53bpMAAAAeAAAACUZ2FzcAAAABAAAAJ0AAAACGdseWaYFbenAAACfAAABDBoZWFkBlpsCQAABqwAAAA2aGhlYQe/A9kAAAbkAAAAJGhtdHgaAAHHAAAHCAAAAGBsb2NhCBgHOAAAB2gAAAAybWF4cAAiAE0AAAecAAAAIG5hbWUQfn7JAAAHvAAAAeZwb3N0AAMAAAAACaQAAAAgAAEAAAAKAB4ALAABbGF0bgAIAAQAAAAAAAAAAQAAAAFsaWdhAAgAAAABAAAAAQAEAAQAAAABAAoAAAABABIABgAiAC4APABKAFwAbgABAAYABAAFAAcADAANABcAAQAEABIAAwAGAAYAAQAEABQABAAKAAsAEQABAAQAFgAEAAYACAAOAAEABAATAAYABwAJAAoAEAAHAAEABAAVAAYACgAPAAwABQAHAAEABAAWAAIAFwAAAAMDqwGQAAUAAAKZAswAAACPApkCzAAAAesAMwEJAAAAAAAAAAAAAAAAAAAAARAAAAAAAAAAAAAAAAAAAAAAQAAA5gYDwP/AAEADwABAAAAAAQAAAAAAAAAAAAAAIAAAAAAAAwAAAAMAAAAcAAEAAwAAABwAAwABAAAAHAAEAHgAAAAaABAAAwAKAAEAIABhAGUAaQBtAHAAdgB55gHmBv/9//8AAAAAACAAYQBjAGkAbQBvAHIAeeYA5gP//f//AAH/4/+j/6L/n/+c/5v/mv+YGhIaEQADAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAH//wAPAAEAAAAAAAAAAAACAAA3OQEAAAAAAQAAAAAAAAAAAAIAADc5AQAAAAABAAAAAAAAAAAAAgAANzkBAAAAAAEAAAAAAAAAAAACAAA3OQEAAAAAAQAAAAAAAAAAAAIAADc5AQAAAAABAAAAAAAAAAAAAgAANzkBAAAAAAEAAAAAAAAAAAACAAA3OQEAAAAAAQAAAAAAAAAAAAIAADc5AQAAAAABAAAAAAAAAAAAAgAANzkBAAAAAAEAAAAAAAAAAAACAAA3OQEAAAAAAQAAAAAAAAAAAAIAADc5AQAAAAABAAAAAAAAAAAAAgAANzkBAAAAAAEAAAAAAAAAAAACAAA3OQEAAAAAAQAAAAAAAAAAAAIAADc5AQAAAAABAAAAAAAAAAAAAgAANzkBAAAAAAEAAAAAAAAAAAACAAA3OQEAAAAAAQAAAAAAAAAAAAIAADc5AQAAAAACAGYAIAOaA2AAFAApAAAlMj4CNTQuAiMiDgIVFB4CMxMjFQYmJzUjJjY3MzU+ARcVMx4BBwIAVJZvQUFvllRUlm9BQW+WVOiuHz0fpwgBCqQfPR+rCgEIIEFyl1ZWl3JBQXKXVlaXckEBZ68HAQquH0AcoAgDB6QfQR4AAgBmACADmgNgABQAMQAAATIeAhUUDgIjIi4CNTQ+AjMTJjQ3MTcuAScHJw4BBxcWFAcxBx4BFzcXPgE3JwIAVJZvQUFvllRUlm9BQW+WVFcICHsIEwuqrg0RCHsICH4HFAqyrg0RB34DYEFyl1ZWl3JBQXKXVlaXckH+TwgWB38cMBeyshcwHH8HFgiCHDAXsrIXMByCAAACAI8AWgNmAyYAEgAlAAABJyYiDwEOARUzERYyNxEzNiYnExEmIgcRIwYWHwEWMj8BPgEnIwH5jA8mD4wIBn8ePh9+AgYK+R4+H34CBQeMDScNjAgFA3QCoYUNDYUKFAv+nQUFAWMLFAr+ZwFjBQX+nQsXB4UNDYUHFwsAAwAHAEwD/QMxAAcADAAUAAABBRUFNy0BJxMXEycDAQcNARclNSUBOv7NATYj/vwBBCY6WbxZvAFSIgED/v0iATf+yQJriV+MTm1uS/31FALQFf0vAgtLbm1OjF+JAAAACQBlACUDkQNSAAoADwAcACEAJgArADAAPQBKAAABMQEnATYWFx4BByUzFSM1BxUjNTQ2OwEVIw4BFQczFSM1ATkBIzUXMxUjNQEzFSM1ETUzFRQGKwE1Mz4BNQUzFSMiJj0BMxUeATMDkf4VjAHsDz4cHxMQ/gCXl/kvGxR/aggNLy8vARuMmZeXAYwwMDAbFXpmCgr9jGd7Eh4wAgsHAsb+FIwB7A8VHBw/D0gwMEFnexIeMAILB+WWlv7QjOswMAGPlpb+hWqCEh4wAw0IETAcFH5pCA0AAQAAAAAAAAAAAAIAADc5AQAAAAABAAAAAQAAolyqV18PPPUACwQAAAAAANGfk9YAAAAA0Z+T1gAAAAAD/QNgAAAACAACAAAAAAAAAAEAAAPA/8AAAAQAAAAAAAP9AAEAAAAAAAAAAAAAAAAAAAAYBAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAZgQAAGYEAACPBAAABwQAAGUAAAAAAAAAAAAKABQAHgAoADIAPABGAFAAWgBkAG4AeACCAIwAlgCgAKoA6AE0AXIBogIOAhgAAAABAAAAGABLAAkAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAADgCuAAEAAAAAAAEADwAAAAEAAAAAAAIABwCoAAEAAAAAAAMADwBOAAEAAAAAAAQADwC9AAEAAAAAAAUACwAtAAEAAAAAAAYADwB7AAEAAAAAAAoAGgDqAAMAAQQJAAEAHgAPAAMAAQQJAAIADgCvAAMAAQQJAAMAHgBdAAMAAQQJAAQAHgDMAAMAAQQJAAUAFgA4AAMAAQQJAAYAHgCKAAMAAQQJAAoANAEEY3VzdG9taXplci1pY29uAGMAdQBzAHQAbwBtAGkAegBlAHIALQBpAGMAbwBuVmVyc2lvbiAxLjAAVgBlAHIAcwBpAG8AbgAgADEALgAwY3VzdG9taXplci1pY29uAGMAdQBzAHQAbwBtAGkAegBlAHIALQBpAGMAbwBuY3VzdG9taXplci1pY29uAGMAdQBzAHQAbwBtAGkAegBlAHIALQBpAGMAbwBuUmVndWxhcgBSAGUAZwB1AGwAYQByY3VzdG9taXplci1pY29uAGMAdQBzAHQAbwBtAGkAegBlAHIALQBpAGMAbwBuRm9udCBnZW5lcmF0ZWQgYnkgSWNvTW9vbi4ARgBvAG4AdAAgAGcAZQBuAGUAcgBhAHQAZQBkACAAYgB5ACAASQBjAG8ATQBvAG8AbgAuAAAAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==\") format(\"truetype\");\n    font-weight: 500;\n    font-style: normal;\n  }\n</style>\n<style scoped>\n  [data-icon]:before {\n    font-family: \"customizer-gaia-icons\";\n    content: attr(data-icon);\n    display: inline-block;\n    font-weight: 500;\n    font-style: normal;\n    text-decoration: inherit;\n    text-transform: none;\n    text-rendering: optimizeLegibility;\n    font-size: 30px;\n  }\n  [data-customizer-icon]:before {\n    font-family: \"customizer-icons\";\n    content: attr(data-customizer-icon);\n    display: inline-block;\n    font-weight: 500;\n    font-style: normal;\n    text-decoration: inherit;\n    text-transform: none;\n    text-rendering: optimizeLegibility;\n    font-size: 30px;\n  }\n  customizer-gaia-dialog {\n    z-index: 10000002 !important;\n  }\n  customizer-gaia-modal {\n    z-index: 10000001 !important;\n    background: white;\n  }\n  .fxos-customizer-main-view {\n    font-size: 14px;\n\n    /** Grey Colors\n     ---------------------------------------------------------*/\n\n    --color-alpha: #333333;\n    --color-beta: #ffffff;\n    --color-gamma: #4d4d4d;\n    --color-delta: #5f5f5f;\n    --color-epsilon: #858585;\n    --color-zeta: #a6a6a6;\n    --color-eta: #c7c7c7;\n    --color-theta: #e7e7e7;\n    --color-iota: #f4f4f4;\n\n  /** Brand Colors\n   ---------------------------------------------------------*/\n\n    --color-darkblue: #00539f;\n    --color-blue: #00caf2;\n    --color-turquoise: #27c8c2;\n    --color-darkorange: #e66000;\n    --color-orange: #ff9500;\n    --color-yellow: #ffcb00;\n    --color-violet: #c40c84;\n\n    --color-warning: #fbbd3c;\n    --color-destructive: #e2443a;\n    --color-preffered: #00ba91;\n\n    /** Background\n     ---------------------------------------------------------*/\n\n    --background: var(--color-alpha);\n    --background-plus: var(--color-gamma);\n    --background-minus: #2B2B2B;\n    --background-minus-minus: #1a1a1a;\n\n    /** Borders\n     ---------------------------------------------------------*/\n\n    --border-color: var(--color-gamma);\n\n    /** Highlight Color\n     ---------------------------------------------------------*/\n\n    --highlight-color: var(--color-blue);\n\n    /** Text Color\n     ---------------------------------------------------------*/\n\n    --text-color: var(--color-beta);\n    --text-color-minus: var(--color-eta);\n\n    /** Button\n     ---------------------------------------------------------*/\n\n    --button-background: var(--background-plus);\n\n    /** Links\n     ---------------------------------------------------------*/\n\n    --link-color: var(--highlight-color);\n\n    /** Inputs\n     ---------------------------------------------------------*/\n\n    --input-background: var(--background-plus);\n    --input-color: var(--color-alpha);\n    --input-clear-background: #909ca7;\n\n    /** Buttons\n     ---------------------------------------------------------*/\n\n     --button-box-shadow: none;\n     --button-box-shadow-active: none;\n\n    /** Header\n     ---------------------------------------------------------*/\n\n    --header-background: var(--background);\n    --header-icon-color: var(--text-color);\n    --header-button-color: var(--highlight-color);\n    --header-disabled-button-color: rgba(255,255,255,0.3);\n\n    /** Text Input\n     ---------------------------------------------------------*/\n\n    --text-input-background: var(--background-minus);\n\n    /** Switch\n     ---------------------------------------------------------*/\n\n    --switch-head-border-color: var(--background-minus-minus);\n    --switch-background: var(--background-minus-minus);\n\n    /** Checkbox\n     ---------------------------------------------------------*/\n\n    --checkbox-border-color: var(--background-minus-minus);\n  }\n\n  div.fxos-customizer-container {\n    background-color: var(--background);\n    position: fixed;\n    left: 0;\n    right: 0;\n    top: 100%; /* off-screen by default, animated translate to show and hide */\n    height: 50vh;\n    border-top: 1px solid #ccc;\n    /*\n     * this needs to go on top of the regular app, but below\n     * customizer-gaia-modal and customizer-gaia-dialog which we override elsewhere.\n     */\n    z-index: 10000000;\n\n    /* We show and hide this with an animated transform */\n    transition: transform 150ms;\n  }\n\n  /*\n   * Add this show class to animate the container onto the screen,\n   * and remove it to animate the container off.\n   */\n  .fxos-customizer-container.show {\n    transform: translateY(-100%);\n  }\n</style>\n<div class=\"fxos-customizer-container\"><fxos-customizer></fxos-customizer></div>\n<div class=\"fxos-customizer-child-views\">\n<fxos-customizer-highlighter></fxos-customizer-highlighter>\n</div>";
 
 var MainView = (function (View) {
   var MainView = function MainView(options) {
@@ -6636,7 +7019,7 @@ var MainView = (function (View) {
   _extends(MainView, View);
 
   MainView.prototype.init = function (controller) {
-    var _this24 = this;
+    var _this25 = this;
     View.prototype.init.call(this, controller);
 
     this.container = this.$("div.fxos-customizer-container");
@@ -6646,28 +7029,45 @@ var MainView = (function (View) {
 
     // We put all of the other view elements that the app needs into the
     // childViews container, so that we can add and remove them all at once.
-    this.childViews.appendChild(this.actionMenuView.el);
     this.childViews.appendChild(this.editView.el);
     this.childViews.appendChild(this.viewSourceView.el);
     this.childViews.appendChild(this.appendChildView.el);
     this.childViews.appendChild(this.copyMoveView.el);
 
+    this.globalStyle = document.createElement("style");
+    this.globalStyle.innerHTML = "/**\n * These styles need to be applied globally to the app when the customizer\n * is displayed so that the user can scroll to see all of the app even\n * with the customizer taking up the bottom half of the screen.\n *\n * Note that this stylesheet is not scoped and is only appended to the DOM\n * when Customizer is open. It is removed upon closing.\n */\nhtml, body {\n  overflow-y: initial !important;\n}\nbody {\n  padding-bottom: 50vh !important;\n}";
+
     // Hide this view from the DOM tree.
     this.customizer.gaiaDomTree.filter = "#" + this.el.id;
 
     this.on("menu", "fxos-customizer", function () {
-      return _this24.controller.openAddonManager();
+      return _this25.controller.openAddonManager();
     });
 
-    this.on("action", "fxos-customizer", function (evt) {
-      _this24.customizer.unwatchChanges();
-      _this24.controller.actionMenuController.open(evt.detail);
+    this.on("action:edit", "fxos-customizer", function (evt) {
+      _this25.controller.editController.open(evt.detail);
+    });
 
-      setTimeout(_this24.customizer.watchChanges.bind(_this24.customizer), 1000);
+    this.on("action:copyOrMove", "fxos-customizer", function (evt) {
+      _this25.controller.copyMoveController.open(evt.detail);
+    });
+
+    this.on("action:append", "fxos-customizer", function (evt) {
+      _this25.controller.appendChildController.open(evt.detail);
+    });
+
+    this.on("action:remove", "fxos-customizer", function (evt) {
+      AddonService.generate(evt.detail, function (generator) {
+        generator.opRemove();
+      });
+    });
+
+    this.on("action:viewSource", "fxos-customizer", function (evt) {
+      _this25.controller.viewSourceController.open(evt.detail);
     });
 
     this.on("selected", "fxos-customizer", function (evt) {
-      _this24.highlighter.highlight(evt.detail);
+      _this25.highlighter.highlight(evt.detail);
     });
   };
 
@@ -6676,43 +7076,45 @@ var MainView = (function (View) {
   };
 
   MainView.prototype._addToBody = function () {
+    document.head.appendChild(this.globalStyle);
     document.body.appendChild(this.el);
   };
 
   MainView.prototype._removeFromBody = function () {
+    document.head.removeChild(this.globalStyle);
     document.body.removeChild(this.el);
   };
 
   MainView.prototype.open = function () {
-    var _this25 = this;
+    var _this26 = this;
     // Add the fxos-customizer element and the other elements we need
     this._addToBody();
 
     return new Promise(function (resolve, reject) {
       window.requestAnimationFrame(function () {
         // Start the opening animation for the customizer
-        _this25.container.classList.add("show");
+        _this26.container.classList.add("show");
       });
 
       // Wait for the animation to end, then:
       var listener = function () {
-        _this25.container.removeEventListener("transitionend", listener);
+        _this26.container.removeEventListener("transitionend", listener);
         // Resolve the promise
         resolve();
       };
 
-      _this25.container.addEventListener("transitionend", listener);
+      _this26.container.addEventListener("transitionend", listener);
     });
   };
 
   MainView.prototype.close = function () {
-    var _this26 = this;
+    var _this27 = this;
     return new Promise(function (resolve, reject) {
       window.requestAnimationFrame(function () {
         // Start hiding the customizer with an animated transition
-        _this26.container.classList.remove("show");
+        _this27.container.classList.remove("show");
         // Erase any highlight right away
-        _this26.highlighter.highlight(null);
+        _this27.highlighter.highlight(null);
         // Scroll the app to the top before beginning the transition
         // so we don't see the blank white padding as the panel slides down
         document.body.scrollIntoView();
@@ -6720,14 +7122,14 @@ var MainView = (function (View) {
 
       // Wait for the transition to end, then:
       var listener = function () {
-        _this26.container.removeEventListener("transitionend", listener);
+        _this27.container.removeEventListener("transitionend", listener);
         // Remove all the unnecessary elements from the document
-        _this26._removeFromBody();
+        _this27._removeFromBody();
         // And resolve the promise
         resolve();
       };
 
-      _this26.container.addEventListener("transitionend", listener);
+      _this27.container.addEventListener("transitionend", listener);
     });
   };
 
@@ -6736,7 +7138,7 @@ var MainView = (function (View) {
 
 /* global View */
 
-var viewSourceViewTemplate = "\n<style scoped>\ncustomizer-gaia-modal {\n  position: absolute;\n  left: 0;\n  top: 0;\n  width: 100%;\n  height: 100%;\n}\ncustomizer-gaia-header {\n  height: 40px;\n  border-bottom: solid white 1px;\n}\npre {\n  left: 0;\n  top: 40px;\n  width: 100%;\n  height: calc(100% - 40px);\n  overflow: scroll;\n  padding: 5px;\n}\n</style>\n<customizer-gaia-modal>\n  <customizer-gaia-header>\n    <button data-action=\"close\">Close</button>\n    <h1>Source View</h1>\n  </customizer-gaia-header>\n  <pre>\n  </pre>\n</customizer-gaia-modal>";
+var viewSourceViewTemplate = "\n<style scoped>\ncustomizer-gaia-modal {\n  position: absolute;\n  left: 0;\n  top: 0;\n  width: 100%;\n  height: 100%;\n}\ncustomizer-gaia-header {\n  height: 40px;\n  border-bottom: solid white 1px;\n}\npre {\n  background: #000;\n  color: #fff;\n  font-family: Consolas,Monaco,\"Andale Mono\",monospace;\n  font-size: 14px;\n  line-height: 1.2em;\n  position: absolute;\n  top: 50px;\n  left: 0;\n  width: 100%;\n  height: calc(100% - 50px);\n  overflow: scroll;\n  padding: 5px;\n}\n</style>\n<customizer-gaia-modal>\n  <customizer-gaia-header>\n    <button data-action=\"close\">Close</button>\n    <h1>Source View</h1>\n  </customizer-gaia-header>\n  <pre>\n  </pre>\n</customizer-gaia-modal>";
 
 var ViewSourceView = (function (View) {
   var ViewSourceView = function ViewSourceView(options) {
@@ -6748,7 +7150,7 @@ var ViewSourceView = (function (View) {
   _extends(ViewSourceView, View);
 
   ViewSourceView.prototype.init = function (controller) {
-    var _this27 = this;
+    var _this28 = this;
     View.prototype.init.call(this, controller);
 
     this.modal = this.$("customizer-gaia-modal");
@@ -6756,9 +7158,9 @@ var ViewSourceView = (function (View) {
     this.pre = this.$("pre");
 
     this.on("click", "button", function (evt) {
-      var action = _this27.controller[evt.target.dataset.action];
+      var action = _this28.controller[evt.target.dataset.action];
       if (typeof action === "function") {
-        action.call(_this27.controller, evt.target.dataset);
+        action.call(_this28.controller, evt.target.dataset);
       }
     });
   };
@@ -6829,27 +7231,19 @@ function initialize() {
     console.error("[Customizer] An error occurred getting the manifestURL");
   };
 
-  /**
-   * TODO: Bug 1148218 - [Customizer] Undo inline stylesheets from Bug 1148139
-   */
-  function styleHack() {
-    /*jshint maxlen:false*/
-    var style = document.createElement("style");
-    style.innerHTML = "@font-face {\n  font-family: \"customizer-gaia-icons\";\n  src: url(\"data:application/x-font-ttf;charset=utf-8;base64,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ASgBKQEqASsBLAEtAS4BLwEwATEBMgEzATQBNQE2ATcBOAE5AToBOwE8AT0BPgE/AUABQQFCAUMBRAFFAUYBRwFIAUkBSgFLAUwBTQFOAU8BUAFRAVIBUwFUAVUBVgFXAVgBWQFaAVsBXAFdAV4BXwFgAWEBYgFjAWQBZQFmAWcBaAFpAWoBawFsAW0BbgFvAXABcQFyAXMBdAF1AXYBdwF4AXkBegF7AXwBfQF+AX8BgAGBAYIBgwGEAYUA7wGGAYcBiAGJAYoBiwBSAYwBjQGOAY8BkAGRAZIBkwGUAZUBlgGXAZgBmQGaAZsBnAGdAZ4BnwGgAaEBogGjAaQBpQGmAacBqAGpAaoBqwGsAa0BrgGvAbABsQGyAbMBtAG1AbYBtwG4AbkBugG7AbwBvQG+Ab8BwAHBAcIBwwHEAcUBxgHHAcgByQHKAcsBzAHNAc4BzwHQAdEB0gHTAdQB1QEtATABMQEyATMBNAE1ATYBNwE4ATkCMmcCM2cCNGcNYWNjZXNzaWJpbGl0eQthZGQtY29udGFjdANhZGQGYWRkb25zCGFpcnBsYW5lC2FsYXJtLWNsb2NrCmFsYXJtLXN0b3AFYWxhcm0FYWxidW0HYWxsLWRheQphcnJvdy1iYWNrDWFycm93LWZvcndhcmQGYXJ0aXN0CmF0dGFjaG1lbnQKYmFjay1saWdodARiYWNrCWJhdHRlcnktMAliYXR0ZXJ5LTEKYmF0dGVyeS0xMAliYXR0ZXJ5LTIJYmF0dGVyeS0zCWJhdHRlcnktNAliYXR0ZXJ5LTUJYmF0dGVyeS02CWJhdHRlcnktNwliYXR0ZXJ5LTgJYmF0dGVyeS05EGJhdHRlcnktY2hhcmdpbmcPYmF0dGVyeS11bmtub3duDmJsdWV0b290aC1hMmRwEGJsdWV0b290aC1jaXJjbGUZYmx1ZXRvb3RoLXRyYW5zZmVyLWNpcmNsZRJibHVldG9vdGgtdHJhbnNmZXIJYmx1ZXRvb3RoCmJyaWdodG5lc3MIYnJvd3NpbmcDYnVnCGNhbGVuZGFyDmNhbGwtYmx1ZXRvb3RoDmNhbGwtZW1lcmdlbmN5D2NhbGwtZm9yd2FyZGluZwxjYWxsLWhhbmctdXAJY2FsbC1ob2xkDWNhbGwtaW5jb21pbmcKY2FsbC1tZXJnZQtjYWxsLW1pc3NlZA1jYWxsLW91dGdvaW5nDWNhbGwtcmV2ZXJzZWQMY2FsbC1yaW5naW5nBGNhbGwSY2FsbGJhY2stZW1lcmdlbmN5BmNhbWVyYRBjaGFuZ2Utd2FsbHBhcGVyC2NsZWFyLWlucHV0BWNsb3NlB2NvbXBvc2UMY29udGFjdC1maW5kCGNvbnRhY3RzB2NyYXNoZWQEY3JvcARkYXRhBmRlbGV0ZQlkZXZlbG9wZXILZGV2aWNlLWluZm8HZGlhbHBhZBBkaXNtaXNzLWtleWJvYXJkDGRvLW5vdC10cmFjaw9kb3dubG9hZC1jaXJjbGUIZG93bmxvYWQEZWRnZQxlZGl0LWNvbnRhY3QKZWRpdC1pbWFnZQRlZGl0DWVtYWlsLWZvcndhcmQPZW1haWwtbWFyay1yZWFkEWVtYWlsLW1hcmstdW5yZWFkCmVtYWlsLW1vdmULZW1haWwtcmVwbHkFZW1haWwLZXhjbGFtYXRpb24GZXhwYW5kCGZhY2Vib29rCGZlZWRiYWNrBGZpbmQHZmlyZWZveARmbGFnCmZsYXNoLWF1dG8JZmxhc2gtb2ZmCGZsYXNoLW9uDGZvY3VzLWxvY2tlZA1mb2N1cy1sb2NraW5nDWZvcndhcmQtbGlnaHQHZm9yd2FyZAdnZXN0dXJlBWdtYWlsDWdyaWQtY2lyY3VsYXIEZ3JpZANnc20JaGRyLWJveGVkA2hkcgpoZWFkcGhvbmVzBGhlbHAKaG9tZXNjcmVlbgloc3BhLXBsdXMEaHNwYRhpbXBvcnQtbWVtb3J5Y2FyZC1jaXJjbGUMaW5jb21pbmctc21zBGluZm8Pa2V5Ym9hcmQtY2lyY2xlCGtleWJvYXJkCWxhbmd1YWdlcwRsaW5rCGxvY2F0aW9uBGxvY2sNbWVkaWEtc3RvcmFnZQRtZW51CG1lc3NhZ2VzA21pYwRtb29uBG1vcmUEbXV0ZQNuZmMGbm8tc2ltDW5vdGlmaWNhdGlvbnMMb3V0Z29pbmctc21zB291dGxvb2sFcGF1c2UMcGljdHVyZS1zaXplC3BsYXktY2lyY2xlBHBsYXkIcGxheWxpc3QHcHJpdmFjeQxyZWNlbnQtY2FsbHMGcmVsb2FkC3JlcGVhdC1vbmNlBnJlcGVhdAlyZXBseS1hbGwGcm9ja2V0BnJvdGF0ZQVzY2VuZQdzZC1jYXJkBnNlYXJjaAlzZWVrLWJhY2sMc2Vlay1mb3J3YXJkBnNlbGVjdApzZWxmLXRpbWVyBHNlbmQIc2V0dGluZ3MFc2hhcmUHc2h1ZmZsZQhzaWduYWwtMAhzaWduYWwtMQhzaWduYWwtMghzaWduYWwtMwhzaWduYWwtNAhzaWduYWwtNQ5zaWduYWwtcm9hbWluZwtzaW0tdG9vbGtpdANzaW0Jc2tpcC1iYWNrDHNraXAtZm9yd2FyZAVzb25ncwlzb3VuZC1tYXgJc291bmQtbWluCnN0YXItZW1wdHkJc3Rhci1mdWxsBHN0b3AOc3RvcmFnZS1jaXJjbGUHc3RvcmFnZQZzd2l0Y2gEc3luYwl0ZXRoZXJpbmcGdGhlbWVzC3RpY2stY2lyY2xlBHRpY2sEdGltZRN0b2dnbGUtY2FtZXJhLWZyb250EnRvZ2dsZS1jYW1lcmEtcmVhcg90b3B1cC13aXRoLWNvZGUFdG9wdXAHdHdpdHRlcg11bmRvLWNpcmN1bGFyBHVuZG8GdW5sb2NrDnVwZGF0ZS1iYWxhbmNlA3VzYgR1c2VyB3ZpYnJhdGUJdmlkZW8tbWljCnZpZGVvLXNpemUFdmlkZW8Jdm9pY2VtYWlsCXdhbGxwYXBlcgZ3aWZpLTEGd2lmaS0yBndpZmktMwZ3aWZpLTQQd2lmaS1wZXJtaXNzaW9ucwAAAAAB//8AAgABAAAADgAAAB4AAAAAAAIAAgADACUAAQAmAPAAAgAEAAAAAgAAAAAAAQAAAAoAHgAsAAFsYXRuAAgABAAAAAD//wABAAAAAWxpZ2EACAAAAAEAAAABAAQABAAAAAEACAABEV4AGAA2AEAASgBUAXoDyAYKBuAH/gj+CVQJ1AoyCmoKrgsqC2QLmgwSDKAPHBAKEHwQ4gABAAQAJgACABQAAQAEACcAAgAUAAEABAAoAAIAFAAOAB4AOgBWAG4AhgCcALIAyADaAOoA+AEGARIBHgA0AA0AHQAdABsAIgADABMAGwAdACIADgAdABEAKQANABAAEAASAB4AHgAWAA8AFgAYABYAHwAkACoACwARABEAAwAQABsAGgAfAA4AEAAfAC4ACwAYAA4AHQAZAAMAEAAYABsAEAAXADYACgAfAB8ADgAQABUAGQASABoAHwAzAAoAHQAdABsAIgADAA8ADgAQABcALwAKABgADgAdABkAAwAeAB8AGwAcAC0ACAAWAB0AHAAYAA4AGgASADIABwAYABgAAwARAA4AJAA1AAYAHQAfABYAHgAfACwABgARABEAGwAaAB4AMQAFABgADwAgABkAMAAFABgADgAdABkAKwADABEAEQAXADAAZACKAKwAzgDuAQwBIgE4AU4BYgF2AYoBngGyAcYB2gHuAgICFgIqAjwCRgBIABkAGAAgABIAHwAbABsAHwAVAAMAHwAdAA4AGgAeABMAEgAdAAMAEAAWAB0AEAAYABIASQASABgAIAASAB8AGwAbAB8AFQADAB8AHQAOABoAHgATABIAHQBHABAAGAAgABIAHwAbABsAHwAVAAMAEAAWAB0AEAAYABIARAAQAA4AHwAfABIAHQAkAAMAEAAVAA4AHQAUABYAGgAUAEUADwAOAB8AHwASAB0AJAADACAAGgAXABoAGwAiABoARgAOABgAIAASAB8AGwAbAB8AFQADAA4ABgARABwASwAKAB0AFgAUABUAHwAaABIAHgAeADsACgAOAB8AHwASAB0AJAADAAUABAA3AAoADgAQABcAAwAYABYAFAAVAB8AQgAJAA4AHwAfABIAHQAkAAMADABBAAkADgAfAB8AEgAdACQAAwALAEAACQAOAB8AHwASAB0AJAADAAoAPwAJAA4AHwAfABIAHQAkAAMACQA+AAkADgAfAB8AEgAdACQAAwAIAD0ACQAOAB8AHwASAB0AJAADAAcAPAAJAA4AHwAfABIAHQAkAAMABgBKAAkAGAAgABIAHwAbABsAHwAVADoACQAOAB8AHwASAB0AJAADAAUAOQAJAA4AHwAfABIAHQAkAAMABABDAAkADgAfAB8AEgAdACQAAwANAEwACAAdABsAIgAeABYAGgAUADgABAAOABAAFwBNAAMAIAAUABcAMABWAHgAmAC2ANQA8AEMASgBQgFcAXYBjgGmAbwB0AHiAfQCBAIUAiICLgI4AFsAEgAOABgAGAAPAA4AEAAXAAMAEgAZABIAHQAUABIAGgAQACQAXQAQABUADgAaABQAEgADACIADgAYABgAHAAOABwAEgAdAFEADwAOABgAGAADABMAGwAdACIADgAdABEAFgAaABQAUAAOAA4AGAAYAAMAEgAZABIAHQAUABIAGgAQACQATwAOAA4AGAAYAAMADwAYACAAEgAfABsAGwAfABUAWAANAA4AGAAYAAMAHQASACEAEgAdAB4AEgARAFcADQAOABgAGAADABsAIAAfABQAGwAWABoAFABUAA0ADgAYABgAAwAWABoAEAAbABkAFgAaABQAWQAMAA4AGAAYAAMAHQAWABoAFAAWABoAFABhAAwAGwAaAB8ADgAQAB8AAwATABYAGgARAFIADAAOABgAGAADABUADgAaABQAAwAgABwAVgALAA4AGAAYAAMAGQAWAB4AHgASABEAXgALABgAEgAOAB0AAwAWABoAHAAgAB8AVQAKAA4AGAAYAAMAGQASAB0AFAASAFMACQAOABgAGAADABUAGwAYABEAYgAIABsAGgAfAA4AEAAfAB4ATgAIAA4AGAASABoAEQAOAB0AYAAHABsAGQAcABsAHgASAGMABwAdAA4AHgAVABIAEQBcAAYADgAZABIAHQAOAF8ABQAYABsAHgASAGQABAAdABsAHABaAAQADgAYABgACQAUADYAVgBwAIgAnACuAL4AzABqABAAFgAeABkAFgAeAB4AAwAXABIAJAAPABsADgAdABEAbAAPABsAIgAaABgAGwAOABEAAwAQABYAHQAQABgAEgBrAAwAGwADABoAGwAfAAMAHwAdAA4AEAAXAGgACwASACEAFgAQABIAAwAWABoAEwAbAGcACQASACEAEgAYABsAHAASAB0AbQAIABsAIgAaABgAGwAOABEAaQAHABYADgAYABwADgARAGYABgASABgAEgAfABIAZQAEAA4AHwAOAAwAGgA+AF4AegCUAKwAxADaAPAA/gEKARQAdAARABkADgAWABgAAwAZAA4AHQAXAAMAIAAaAB0AEgAOABEAcwAPABkADgAWABgAAwAZAA4AHQAXAAMAHQASAA4AEQByAA0AGQAOABYAGAADABMAGwAdACIADgAdABEAbwAMABEAFgAfAAMAEAAbABoAHwAOABAAHwB4AAsAIwAQABgADgAZAA4AHwAWABsAGgB2AAsAGQAOABYAGAADAB0AEgAcABgAJABwAAoAEQAWAB8AAwAWABkADgAUABIAdQAKABkADgAWABgAAwAZABsAIQASAHkABgAjABwADgAaABEAdwAFABkADgAWABgAcQAEABEAFgAfAG4ABAARABQAEgAMABoANgBSAGwAggCWAKgAugDMANwA7AD2AIQADQAbAB0AIgAOAB0AEQADABgAFgAUABUAHwCDAA0AGwAQACAAHgADABgAGwAQABcAFgAaABQAggAMABsAEAAgAB4AAwAYABsAEAAXABIAEQB/AAoAGAAOAB4AFQADAA4AIAAfABsAgAAJABgADgAeABUAAwAbABMAEwCBAAgAGAAOAB4AFQADABsAGgB7AAgAEgASABEADwAOABAAFwB6AAgADgAQABIADwAbABsAFwCFAAcAGwAdACIADgAdABEAfQAHABYAHQASABMAGwAjAH4ABAAYAA4AFAB8AAQAFgAaABEABQAMACgAOABEAE4AiAANAB0AFgARAAMAEAAWAB0AEAAgABgADgAdAIYABwASAB4AHwAgAB0AEgCHAAUAGQAOABYAGACJAAQAHQAWABEAigADAB4AGQAHABAAJgA8AFAAZABuAHgAjwAKABsAGQASAB4AEAAdABIAEgAaAI0ACgASAA4AEQAcABUAGwAaABIAHgCQAAkAHgAcAA4AAwAcABgAIAAeAIsACQARAB0AAwAPABsAIwASABEAkQAEAB4AHAAOAI4ABAASABgAHACMAAMAEQAdAAMACAA6AFQAkgAYABkAHAAbAB0AHwADABkAEgAZABsAHQAkABAADgAdABEAAwAQABYAHQAQABgAEgCTAAwAGgAQABsAGQAWABoAFAADAB4AGQAeAJQABAAaABMAGwACAAYAJgCVAA8AEgAkAA8AGwAOAB0AEQADABAAFgAdABAAGAASAJYACAASACQADwAbAA4AHQARAAQACgAeADAAOgCXAAkADgAaABQAIAAOABQAEgAeAJkACAAbABAADgAfABYAGwAaAJgABAAWABoAFwCaAAQAGwAQABcACAASAC4AQABMAFYAYABqAHQAmwANABIAEQAWAA4AAwAeAB8AGwAdAA4AFAASAJ0ACAASAB4AHgAOABQAEgAeAJ8ABQAWABoAIAAeAKIABAAgAB8AEgChAAQAGwAdABIAnAAEABIAGgAgAKAABAAbABsAGgCeAAMAFgAQAAMACAAkADIApQANABsAHwAWABMAFgAQAA4AHwAWABsAGgAeAKQABgAbAAMAHgAWABkAowADABMAEAADAAgAIgAyAKcADAAgAB8AFAAbABYAGgAUAAMAHgAZAB4AqAAHACAAHwAYABsAGwAXAKYAAQAGAA4AKABAAFIAYgBuAKoADAAWABAAHwAgAB0AEgADAB4AFgAlABIAqwALABgADgAkAAMAEAAWAB0AEAAYABIArQAIABgADgAkABgAFgAeAB8ArgAHAB0AFgAhAA4AEAAkAKkABQAOACAAHgASAKwABAAYAA4AJAAHABAAKgBCAFYAZAByAIAArwAMABIAEAASABoAHwADABAADgAYABgAHgCxAAsAEgAcABIADgAfAAMAGwAaABAAEgCzAAkAEgAcABgAJAADAA4AGAAYALIABgASABwAEgAOAB8AtAAGABsAEAAXABIAHwCwAAYAEgAYABsADgARALUABgAbAB8ADgAfABIAIABCAGAAfgCYALIAygDgAPYBCgEeATIBRgFaAWwBfgGQAaIBtAHGAdgB6AH4AggCFgIkAjICPgJKAlYCYAJqAnQA0gAOAB8AGwAdAA4AFAASAAMAEAAWAB0AEAAYABIAxwAOABYAFAAaAA4AGAADAB0AGwAOABkAFgAaABQAywAMABcAFgAcAAMAEwAbAB0AIgAOAB0AEQC6AAwAEgASABcAAwATABsAHQAiAA4AHQARAMgACwAWABkAAwAfABsAGwAYABcAFgAfALwACgASABgAEwADAB8AFgAZABIAHQDPAAoAHwAOAB0AAwASABkAHAAfACQAzgAJABsAIAAaABEAAwAZABYAGgDNAAkAGwAgABoAEQADABkADgAjANAACQAfAA4AHQADABMAIAAYABgAygAJABcAFgAcAAMADwAOABAAFwC5AAkAEgASABcAAwAPAA4AEAAXAMMACAAWABQAGgAOABgAAwAGAMIACAAWABQAGgAOABgAAwAFAMEACAAWABQAGgAOABgAAwAEAL4ACAASAB8AHwAWABoAFAAeAMYACAAWABQAGgAOABgAAwAJAMUACAAWABQAGgAOABgAAwAIAMQACAAWABQAGgAOABgAAwAHANMABwAfABsAHQAOABQAEgDAAAcAFQAgABMAEwAYABIAtwAHABEAAwAQAA4AHQARALsABgASABgAEgAQAB8AuAAGABIADgAdABAAFQDUAAYAIgAWAB8AEAAVAL8ABQAVAA4AHQASAMwABQAbABoAFAAeALYABQAQABIAGgASANEABAAfABsAHAC9AAQAEgAaABEA1QAEACQAGgAQAMkAAwAWABkACgAWAD4AZACEAJwAsADAAM4A2gDkANsAEwAbABQAFAAYABIAAwAQAA4AGQASAB0ADgADABMAHQAbABoAHwDcABIAGwAUABQAGAASAAMAEAAOABkAEgAdAA4AAwAdABIADgAdAN0ADwAbABwAIAAcAAMAIgAWAB8AFQADABAAGwARABIA2AALABYAEAAXAAMAEAAWAB0AEAAYABIA1gAJABIAHwAVABIAHQAWABoAFADfAAcAIgAWAB8AHwASAB0A1wAGABUAEgAZABIAHgDeAAUAGwAcACAAHADZAAQAFgAQABcA2gAEABYAGQASAAYADgAsAEgAVgBgAGoA4wAOABwAEQAOAB8AEgADAA8ADgAYAA4AGgAQABIA4AANABoAEQAbAAMAEAAWAB0AEAAgABgADgAdAOIABgAaABgAGwAQABcA4QAEABoAEQAbAOUABAAeABIAHQDkAAMAHgAPAAUADAAiADYASgBaAOgACgAWABEAEgAbAAMAHgAWACUAEgDqAAkAGwAWABAAEgAZAA4AFgAYAOcACQAWABEAEgAbAAMAGQAWABAA5gAHABYADwAdAA4AHwASAOkABQAWABEAEgAbAAYADgAwAEQAUgBgAG4A8AAQABYAEwAWAAMAHAASAB0AGQAWAB4AHgAWABsAGgAeAOsACQAOABgAGAAcAA4AHAASAB0A7gAGABYAEwAWAAMABwDtAAYAFgATABYAAwAGAOwABgAWABMAFgADAAUA7wAGABYAEwAWAAMACAACAAIABgAIAAAADgAiAAMAAAABAAAACgAeADQAAWxhdG4ACAAEAAAAAP//AAEAAAABc2l6ZQAIAAQAAACgAAAAAAAAAAAAAAAAAAAAAQAAAADMPaLPAAAAANETpOQAAAAA0ROk5A==\") format(\"truetype\");\n  font-weight: 500;\n  font-style: normal;\n}\n\n[data-icon]:before,\n.ligature-icons {\n  font-family: \"customizer-gaia-icons\";\n  content: attr(data-icon);\n  display: inline-block;\n  font-weight: 500;\n  font-style: normal;\n  text-decoration: inherit;\n  text-transform: none;\n  text-rendering: optimizeLegibility;\n  font-size: 30px;\n  -webkit-font-smoothing: antialiased;\n}\n\ncustomizer-gaia-dialog {\n  z-index: 10000002 !important;\n}\n\ncustomizer-gaia-modal {\n  z-index: 10000001 !important;\n  background: white;\n}";
-    document.head.appendChild(style);
-  }
-
   function boot(manifestURL) {
+    window.__customizer__ = {};
+
     document.documentElement.dataset.customizerInit = true;
 
     if (manifestURL === SYSTEM_APP) {
-      return new TouchForwarderController();
+      window.__customizer__.touchForwarderController = new TouchForwarderController();
+      return;
     }
 
-    styleHack();
-
-    return new MainController({
-      manifestURL: manifestURL
+    window.__customizer__.mainController = new MainController({
+      manifestURL: manifestURL,
+      lazyLoadModules: true
     });
   }
 }}).call(window);

@@ -24,9 +24,20 @@ define(["exports", "components/fxos-web-server/dist/fxos-web-server"], function 
           if (url && url === _this.lastLaunchedManifestURL) {
             response.send("STOP_SERVER_INVOKED");
             _this.stopServer();
+            window.dispatchEvent(new CustomEvent("achievement-rewarded", {
+              detail: {
+                criteria: "achievements/customize-champ",
+                evidence: "urn:fxos-customizer-launcher:customizer:launched",
+                name: "Customize Champ",
+                description: "Open Customizer in an app",
+                image: "./img/customize-champ.png"
+              }
+            }));
             return;
           }
         }
+        // Default response for all other requests
+        response.send(null, 404);
       });
     };
 

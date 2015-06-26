@@ -4,7 +4,9 @@
 var assert = require('chai').assert;
 
 var Messages = require('./lib/messages.js');
+var InboxView = require('./lib/views/inbox/view');
 var MessagesActivityCaller = require('./lib/messages_activity_caller.js');
+var Storage = require('./lib/storage.js');
 
 marionette('Messages Composer', function() {
   var apps = {};
@@ -178,11 +180,7 @@ marionette('Messages Composer', function() {
 
       // Case #10: Add attachment, message is converted to MMS and appropriate
       // label appears in the subject line.
-      client.waitFor(function() {
-        return composer.attachButton.enabled();
-      }.bind(this));
-      composer.attachButton.tap();
-      messagesApp.selectSystemMenuOption('Messages Activity Caller');
+      messagesApp.addAttachment();
 
       activityCallerApp.switchTo();
       activityCallerApp.pickImage();
@@ -256,6 +254,90 @@ marionette('Messages Composer', function() {
 
       composer.subjectInput.sendKeys(Messages.Chars.BACKSPACE);
       assertIsFocused(composer.messageInput, 'Message input should be focused');
+    });
+  });
+
+
+  suite('Recipients', function() {
+    var newMessage, storage;
+    var contact = {
+      name: ['Existing Contact'],
+      givenName: ['Existing'],
+      familyName: ['Contact'],
+      tel: [{
+        value: '5551234567',
+        type: 'Mobile'
+      }]
+    };
+    var MOCKS = [
+      '/mocks/mock_test_storages.js',
+      '/mocks/mock_navigator_moz_contacts.js'
+    ];
+
+    setup(function() {
+      storage = Storage.create(client);
+
+      MOCKS.forEach(function(mock) {
+        client.contentScript.inject(__dirname + mock);
+      });
+
+      messagesApp.launch();
+      storage.setMessagesStorage();
+      storage.setContactsStorage([contact]);
+
+      var inbox = new InboxView(client);
+      newMessage = inbox.createNewMessage();
+    });
+
+    test('should match an existing contact', function() {
+      newMessage.addNewRecipient('Existing Contact');
+      assert.deepEqual(contact.name, newMessage.recipients);
+      assert.equal(contact.tel[0].value, newMessage.recipientsPhoneNumbers);
+    });
+
+    suite('Invalid recipients', function() {
+      suite('Recipients list', function() {
+        test('should display that a non existing contact is invalid',
+        function() {
+          newMessage.addNewRecipient('non_exisiting_contact');
+          assert.isTrue(newMessage.containsInvalidRecipients());
+        });
+
+        test('should allow to correct an invalid contact', function() {
+          newMessage.addNewRecipient('non_exisiting_contact');
+          newMessage.clearRecipients();
+          newMessage.addNewRecipient(123);
+          assert.lengthOf(newMessage.recipients, 1);
+          assert.equal(newMessage.recipients[0], '123');
+          assert.isFalse(newMessage.containsInvalidRecipients());
+        });
+      });
+
+      suite('Content composer', function() {
+        test('should not enable send button if the contact is invalid',
+        function() {
+          newMessage.addNewRecipient('invalidContact');
+          newMessage.typeMessage('Test message');
+          assert.isFalse(newMessage.isSendButtonEnabled());
+        });
+      });
+    });
+
+    suite('Semicolon as separator', function() {
+      var separator = ';';
+
+      test('should complete the entered recipients', function() {
+        newMessage.addNewRecipient(123, separator);
+        assert.lengthOf(newMessage.recipients, 1);
+        assert.notInclude(newMessage.recipients[0], separator);
+      });
+
+      test('should leave the input ready to accept another recipient',
+      function() {
+        newMessage.addNewRecipient(123, separator);
+        newMessage.addNewRecipient(456, separator);
+        assert.lengthOf(newMessage.recipients, 2);
+      });
     });
   });
 });

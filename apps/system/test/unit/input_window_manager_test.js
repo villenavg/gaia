@@ -866,35 +866,91 @@ suite('InputWindowManager', function() {
     test('hideInputWindow', function(done) {
       var stubKBPublish = this.sinon.stub(manager, '_kbPublish')
         .returns(Promise.resolve());
+      var fakeTimer = this.sinon.useFakeTimers();
       var inputWindow = new InputWindow();
       manager._currentWindow = inputWindow;
 
       manager.hideInputWindow();
 
-      assert.isTrue(stubKBPublish.calledWith('keyboardhide', undefined));
+      assert.strictEqual(manager._currentWindow, null);
+      assert.strictEqual(manager._windowToClose, inputWindow);
+
+      assert.isFalse(stubKBPublish.calledOnce,
+        'Should not call keyboardhide without waiting for timeout.');
+      fakeTimer.tick(manager.HIDE_INPUT_WINDOW_TIMEOUT);
 
       Promise.resolve().then(function() {
+        assert.isTrue(stubKBPublish.calledWith('keyboardhide', undefined));
+
         assert.strictEqual(manager._currentWindow, null);
+        assert.strictEqual(manager._windowToClose, null);
+
+        // Ensure the next then() block happens after iwm_hideInputWindowSync()
+        return stubKBPublish.firstCall.returnValue;
+      }).then(function() {
         assert.isTrue(inputWindow.close.called);
         assert.isFalse(inputWindow.close.calledWith('immediate'));
+
+        fakeTimer.restore();
       }).then(done, done);
     });
 
-    test('hideInputWindow (cancelled w/ another showInputWindow() call)',
+    test('hideInputWindow (cancelled w/ another showInputWindow() call ' +
+      'during timeout)',
     function(done) {
       var stubKBPublish = this.sinon.stub(manager, '_kbPublish')
         .returns(Promise.resolve());
       var inputWindow = new InputWindow();
+      var fakeTimer = this.sinon.useFakeTimers();
       manager._currentWindow = inputWindow;
 
       manager.hideInputWindow();
 
-      assert.isTrue(stubKBPublish.calledWith('keyboardhide', undefined));
-      assert.equal(manager._currentWindow, null);
+      assert.strictEqual(manager._currentWindow, null);
+      assert.strictEqual(manager._windowToClose, inputWindow);
+
+      assert.isFalse(stubKBPublish.calledOnce,
+        'Should not call keyboardhide without waiting for timeout.');
 
       manager._currentWindow = inputWindow;
 
+      fakeTimer.tick(manager.HIDE_INPUT_WINDOW_TIMEOUT);
+
       Promise.resolve().then(function() {
+        assert.isFalse(stubKBPublish.calledWith('keyboardhide', undefined));
+
+        assert.strictEqual(manager._windowToClose, null);
+      }).then(done, done);
+    });
+
+    test('hideInputWindow (cancelled w/ another showInputWindow() call ' +
+      'after keyboardhide)',
+    function(done) {
+      var stubKBPublish = this.sinon.stub(manager, '_kbPublish')
+        .returns(Promise.resolve());
+      var inputWindow = new InputWindow();
+      var fakeTimer = this.sinon.useFakeTimers();
+      manager._currentWindow = inputWindow;
+
+      manager.hideInputWindow();
+
+      assert.strictEqual(manager._currentWindow, null);
+      assert.strictEqual(manager._windowToClose, inputWindow);
+
+      assert.isFalse(stubKBPublish.calledOnce,
+        'Should not call keyboardhide without waiting for timeout.');
+      fakeTimer.tick(manager.HIDE_INPUT_WINDOW_TIMEOUT);
+
+      Promise.resolve().then(function() {
+        assert.isTrue(stubKBPublish.calledWith('keyboardhide', undefined));
+
+        assert.equal(manager._currentWindow, null);
+        manager._currentWindow = inputWindow;
+
+        // Ensure the next then() block happens after iwm_hideInputWindowSync()
+        return stubKBPublish.firstCall.returnValue;
+      }).then(function() {
+        assert.strictEqual(manager._windowToClose, null);
         assert.isFalse(inputWindow.close.called);
       }).then(done, done);
     });
@@ -910,6 +966,22 @@ suite('InputWindowManager', function() {
       assert.isTrue(stubKBPublish.calledWith('keyboardhide', undefined));
 
       assert.strictEqual(manager._currentWindow, null);
+      assert.strictEqual(manager._windowToClose, null);
+      assert.isTrue(inputWindow.close.calledWith('immediate'));
+    });
+
+    test('hideInputWindowImmediately (during timeout)', function() {
+      var stubKBPublish = this.sinon.stub(manager, '_kbPublish');
+
+      var inputWindow = new InputWindow();
+      manager._windowToClose = inputWindow;
+
+      manager.hideInputWindowImmediately();
+
+      assert.isTrue(stubKBPublish.calledWith('keyboardhide', undefined));
+
+      assert.strictEqual(manager._currentWindow, null);
+      assert.strictEqual(manager._windowToClose, null);
       assert.isTrue(inputWindow.close.calledWith('immediate'));
     });
 

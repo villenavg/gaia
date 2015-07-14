@@ -11,8 +11,10 @@
 /* global LazyLoader */
 /* global monitorTagVisibility */
 /* global Normalizer */
+/* global Loader */
 /* global utils */
 /* global ContactsService */
+/* global HeaderUI */
 
 var contacts = window.contacts || {};
 contacts.List = (function() {
@@ -1007,7 +1009,7 @@ contacts.List = (function() {
   function onICEGroupClicked() {
     loadICE().then(() => {
       LazyLoader.load('/shared/js/contacts/utilities/image_loader.js', () => {
-        Contacts.view('Ice', function() {
+        Loader.view('Ice', function() {
           // Prebuild the rows here, we have all the data to
           // build them. Current amount of rows is 2.
           function rowBuilder(id, node) {
@@ -2183,7 +2185,7 @@ contacts.List = (function() {
     }
   };
   function updateSelectCount(count) {
-    Contacts.updateSelectCountTitle(count);
+    HeaderUI.updateSelectCountTitle(count);
   }
 
   // Given a UUID we will call the callback function

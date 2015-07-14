@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* global SettingsListener */
+
 /**
  * On B2G we cannot directly show the content of about:* pages with access to
  * privileged code. We already have an about:serviceworkers chrome page showing
@@ -53,6 +55,28 @@ define(function(require) {
       this._elements = elements;
       this.listeners = {};
       this.serviceWorkersCount = 0;
+      SettingsListener.observe('dom.serviceWorkers.interception.enabled', true,
+                               (enabled) => {
+        this._elements.serviceWorkersInterceptionEnabled.checked = enabled;
+      });
+      SettingsListener.observe('dom.serviceWorkers.testing.enabled', false,
+                               (enabled) => {
+        this._elements.serviceWorkersTestingEnabled.checked = enabled;
+      });
+    },
+
+    onInterceptionCheckboxClick: function() {
+      var checkbox = this._elements.serviceWorkersInterceptionEnabled;
+      navigator.mozSettings.createLock().set({
+        'dom.serviceWorkers.interception.enabled': checkbox.checked
+      });
+    },
+
+    onTestingCheckboxClick: function() {
+      var checkbox = this._elements.serviceWorkersTestingEnabled;
+      navigator.mozSettings.createLock().set({
+        'dom.serviceWorkers.testing.enabled': checkbox.checked
+      });
     },
 
     renderServiceWorkerInfo: function(serviceWorkersInfo) {
@@ -104,7 +128,7 @@ define(function(require) {
         var self = this;
         this.listeners[scope] = {
           update: function() {
-            self.update(scope);
+            self.update(principal, scope);
           },
           unregister: function() {
             self.unregister(principal, scope);
@@ -199,9 +223,10 @@ define(function(require) {
       });
     },
 
-    update: function(scope) {
+    update: function(principal, scope) {
       this.iacRequest({
         name: 'update',
+        principal: principal,
         scope: scope
       }).catch(e => {
         console.error('Could not update service worker ' + e);

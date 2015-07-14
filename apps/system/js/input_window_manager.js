@@ -80,6 +80,10 @@
     // The InputWindow that's being displayed
     this._currentWindow = null;
 
+    // This points to an InputWindow that should be closed but displayed during
+    // the timeout.
+    this._windowToClose = null;
+
     // The switched-out InputWindow that we need to deactivate when the
     // switched-in InputWindow finishes activation.
     this._lastWindow = null;
@@ -422,18 +426,61 @@
     this._currentWindow = nextWindow;
   };
 
+  InputWindowManager.prototype.HIDE_INPUT_WINDOW_TIMEOUT = 200;
+
   InputWindowManager.prototype.hideInputWindow =
   function iwm_hideInputWindow() {
     if (!this._currentWindow){
       return;
     }
 
-    var windowToClose = this._currentWindow;
+    var windowToClose = this._windowToClose = this._currentWindow;
     this._currentWindow = null;
 
-    // First we publish an keyboardhide event that would cause the
-    // foreground app to resize.
-    return this._kbPublish('keyboardhide', undefined)
+    // If the focus is regain within a short time, we would not want to resize
+    // the forground app viewport, which creates suboptimal experiences
+    // (see bug 1176926 and bug 1176771).
+    //
+    // Previously we tried to remove this timeout by delay the blurring message
+    // with a next tick from forms.js (bug 1057898), but this is suboptimal
+    // for the following reasons: While the focus is regain before next tick
+    // when switching between two inputs (see the case in bug 1057898),
+    // That will not work when the focus is removed by tapping a button and
+    // regain at the click event of the button (which is the case of Message app
+    // composer). In this case, the focus is removed at mousedown/touchstart
+    // event; next tick of the blur would happen *before* touchend and click
+    // events of the button.
+    //
+    // This timeout also happen to absorb the event order differences between
+    // oop/inproc environment (see bug 1171950 comment 2).
+    return new Promise(function(resolve) {
+        setTimeout(resolve, this.HIDE_INPUT_WINDOW_TIMEOUT);
+      }.bind(this))
+      .then(function iwm_publishKeyboardHideEventSync() {
+        // We should not close ourselves if we are being set back to become
+        // the currentWindow again, which implies we have already regain the
+        // focus.
+        if (this._currentWindow === windowToClose) {
+          this._windowToClose = null;
+          return;
+        }
+
+        // We also should abort if _windowToClose is already null, indicating
+        // the keyboardhide event is already dispatched.
+        if (this._windowToClose === null) {
+          return;
+        }
+
+        // Set this flag to null so that keyboardhide event will not be
+        // dispatched again in another call.
+        this._windowToClose = null;
+
+        // Publish an keyboardhide event that would cause the
+        // foreground app to resize.
+        // The promise will resolve when all the promises passed to waitUntil()
+        // have resolved.
+        return this._kbPublish('keyboardhide', undefined);
+      }.bind(this))
       .then(function iwm_hideInputWindowSync() {
         // We should not close ourselves if we are being set back to become
         // the currentWindow again.
@@ -448,14 +495,14 @@
 
   InputWindowManager.prototype.hideInputWindowImmediately =
   function iwm_hideInputWindowImmediately() {
-    if (!this._currentWindow){
+    if (!this._currentWindow && !this._windowToClose){
       return;
     }
 
     this._kbPublish('keyboardhide', undefined);
 
-    var windowToClose = this._currentWindow;
-    this._currentWindow = null;
+    var windowToClose = this._currentWindow || this._windowToClose;
+    this._currentWindow = this._windowToClose = null;
     windowToClose.close('immediate');
   };
 

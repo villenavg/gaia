@@ -35,7 +35,8 @@ var Phase = function(options) {
     timeout: options.emulator ? 150 * 1000 : 60 * 1000,
     retries: 1,
     runs: 1,
-    launchDelay: 10 * 1000
+    launchDelay: 10 * 1000,
+    memoryDelay: 0
   }, options);
 
   if (process.env.TIMEOUT) {
@@ -44,6 +45,10 @@ var Phase = function(options) {
 
   if (process.env.LAUNCH_DELAY) {
     this.options.launchDelay = process.env.LAUNCH_DELAY;
+  }
+
+  if (process.env.MEMORY_DELAY) {
+    this.options.memoryDelay = process.env.MEMORY_DELAY;
   }
 
   this.log('Preparing to start testing...');
@@ -392,24 +397,27 @@ Phase.prototype.logStats = function() {
     Object
       .keys(run)
       .forEach(function(key) {
-        var entry = run[key][0];
-        var contextResults = results[entry.context];
+        var entries = run[key];
 
-        if (!contextResults) {
-          contextResults = results[entry.context] = {};
-        }
+        entries.forEach(function(entry) {
+          var contextResults = results[entry.context];
 
-        if (!contextResults[key]) {
-          contextResults[key] = [];
-        }
+          if (!contextResults) {
+            contextResults = results[entry.context] = {};
+          }
 
-        var value = entry.value;
+          if (!contextResults[key]) {
+            contextResults[key] = [];
+          }
 
-        if (entry.entryType === 'memory') {
-          value = value / 1024 / 1024;
-        }
+          var value = entry.value;
 
-        contextResults[key].push(value);
+          if (entry.entryType === 'memory') {
+            value = value / 1024 / 1024;
+          }
+
+          contextResults[key].push(value);
+        });
       });
   });
 

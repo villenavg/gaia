@@ -319,26 +319,22 @@ class GaiaData(object):
             self.set_setting('audio.volume.%s' % channel, value)
 
     def bluetooth_enable(self):
-        self.marionette.switch_to_frame()
         return self.marionette.execute_async_script("return GaiaDataLayer.enableBluetooth()")
 
     def bluetooth_disable(self):
-        self.marionette.switch_to_frame()
         return self.marionette.execute_async_script("return GaiaDataLayer.disableBluetooth()")
 
     @property
     def bluetooth_is_enabled(self):
-        return self.marionette.execute_script("return window.navigator.mozBluetooth.enabled")
+        return self.marionette.execute_script("return GaiaDataLayer.getBluetoothDefaultAdapter().state === 'enabled'")
 
     @property
     def bluetooth_is_discoverable(self):
-        self.marionette.switch_to_frame()
-        return self.marionette.execute_script("return window.wrappedJSObject.Bluetooth.defaultAdapter.discoverable")
+        return self.marionette.execute_script("return GaiaDataLayer.getBluetoothDefaultAdapter().discoverable")
 
     @property
     def bluetooth_name(self):
-        self.marionette.switch_to_frame()
-        return self.marionette.execute_script("return window.wrappedJSObject.Bluetooth.defaultAdapter.name")
+        return self.marionette.execute_script("return GaiaDataLayer.getBluetoothDefaultAdapter().name")
 
     @property
     def is_cell_data_enabled(self):
@@ -1141,8 +1137,33 @@ class GaiaTestCase(MarionetteTestCase, B2GTestCaseMixin):
             self.marionette.set_search_timeout(self.marionette.timeout or 10000)
 
     def tearDown(self):
+        self.marionette.switch_to_frame()
         if self.device.is_desktop_b2g and self.device.storage_path:
             shutil.rmtree(self.device.storage_path, ignore_errors=True)
         self.apps = None
         self.data_layer = None
         MarionetteTestCase.tearDown(self)
+
+
+class PasscodeTestCase(GaiaTestCase):
+
+    def set_passcode_to_1337(self):
+        """Set the passcode (but neither disable nor enable it)."""
+        SET_DIGEST_VALUE = 'lockscreen.passcode-lock.digest.value'
+        SET_DIGEST_SALT = 'lockscreen.passcode-lock.digest.salt'
+        SET_DIGEST_ITERATIONS = 'lockscreen.passcode-lock.digest.iterations'
+        SET_DIGEST_ALGORITHM = 'lockscreen.passcode-lock.digest.algorithm'
+
+        digestNums = [195, 174, 33, 98, 39, 43, 135, 112,
+                      126, 176, 82, 150, 236, 112, 87, 54,
+                      96, 60, 208, 18, 86, 178, 19, 20,
+                      129, 91, 168, 134, 241, 138, 59, 210]
+
+        settings = {}
+        settings[SET_DIGEST_VALUE] = digestNums
+        settings[SET_DIGEST_SALT] = [4, 8, 15, 16, 23, 42, 108, 0]
+        settings[SET_DIGEST_ITERATIONS] = 1000
+        settings[SET_DIGEST_ALGORITHM] = 'SHA-1'
+
+        for setting, value in settings.iteritems():
+            self.data_layer.set_setting(setting, value)

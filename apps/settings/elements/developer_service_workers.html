@@ -9,13 +9,29 @@
       <h1>Service Workers</h1>
     </gaia-header>
 
-    <div id="service-workers-list-section">
-      <ul id="service-workers-list"></ul>
+    <div>
+      <ul>
+        <li>
+          <gaia-switch id="service-workers-interception-enabled"
+                       name="dom.serviceWorkers.interception.enabled">
+            <label data-l10n-id="service-workers-interception"></label>
+          </gaia-switch>
+        </li>
+        <li>
+          <gaia-switch id="service-workers-testing-enabled"
+                       name="dom.serviceWorkers.testing.enabled">
+            <label data-l10n-id="service-workers-testing"></label>
+          </gaia-switch>
+        </li>
+        <li id="service-workers-list-section">
+          <ul id="service-workers-list"></ul>
+        </li>
+        <li id="service-workers-empty-section" class="hidden">
+          <span id="empty-text" data-l10n-id="service-worker-no-registrations"></span>
+        </li>
+      </ul>
     </div>
 
-    <div id="service-workers-empty-section" class="hidden">
-      <span id="empty-text" data-l10n-id="service-worker-no-registrations"></span>
-    </div>
 
     <panel data-path="panels/developer_service_workers/panel"></panel>
 

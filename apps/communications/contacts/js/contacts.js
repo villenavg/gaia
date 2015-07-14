@@ -6,11 +6,11 @@
 /* global fb */
 /* global fbLoader */
 /* global LazyLoader */
-/* global MozActivity */
 /* global MainNavigation */
-/* global SmsIntegration */
+/* global Loader */
 /* global TAG_OPTIONS */
 /* global utils */
+/* global HeaderUI */
 
 /* global ContactsService */
 
@@ -25,33 +25,12 @@ var COMMS_APP_ORIGIN = location.origin;
 var SCALE_RATIO = window.devicePixelRatio || 1;
 
 var Contacts = (function() {
-  var SHARED = 'shared';
-  var SHARED_PATH = '/' + SHARED + '/' + 'js';
-
-  var SHARED_UTILS = 'sharedUtilities';
-  var SHARED_UTILS_PATH = SHARED_PATH + '/contacts/import/utilities';
-
-  var SHARED_CONTACTS = 'sharedContacts';
-  var SHARED_CONTACTS_PATH = SHARED_PATH + '/' + 'contacts';
-
-  const SELECT_MODE_CLASS = {
-    'pick' : {
-      'text/vcard' : ['disable-fb-items']
-    }
-  };
 
   var goToForm = function edit() {
     var transition = ActivityHandler.currentlyHandling ? 'activity-popup'
                                                        : 'fade-in';
     MainNavigation.go('view-contact-form', transition);
   };
-
-  var settings,
-      settingsButton,
-      header,
-      addButton,
-      appTitleElement,
-      editModeTitleElement;
 
   var loadAsyncScriptsDeferred = {};
   loadAsyncScriptsDeferred.promise = new Promise((resolve) => {
@@ -102,11 +81,6 @@ var Contacts = (function() {
             var id = params.id;
             ContactsService.get(id, function onSuccess(savedContact) {
               currentContact = savedContact;
-
-              // Enable NFC listening is available
-              if ('mozNfc' in navigator) {
-                contacts.NFC.startListening(currentContact);
-              }
 
               contactsDetails.render(currentContact);
 
@@ -174,7 +148,7 @@ var Contacts = (function() {
         });
         break;
       case 'multiple-select-view':
-        Contacts.view('multiple_select', () => {
+        Loader.view('multiple_select', () => {
           MainNavigation.go('multiple-select-view', 'activity-popup');
         });
         break;
@@ -205,15 +179,6 @@ var Contacts = (function() {
       console.error('Extras malformed');
       return null;
     }
-  };
-
-  var initContainers = function initContainers() {
-    settings = document.getElementById('view-settings');
-    settingsButton = document.getElementById('settings-button');
-    header = document.getElementById('contacts-list-header');
-    addButton = document.getElementById('add-contact-button');
-    editModeTitleElement = document.getElementById('edit-title');
-    appTitleElement = document.getElementById('app-title');
   };
 
   var onLocalized = function onLocalized() {
@@ -271,79 +236,15 @@ var Contacts = (function() {
     getFirstContacts();
     contactsList.initAlphaScroll();
     contactsList.handleClick(contactListClickHandler);
-    checkCancelableActivity();
-  };
-
-  function setupCancelableHeader(alternativeTitle) {
-    header.setAttribute('action', 'close');
-    settingsButton.hidden = true;
-    addButton.hidden = true;
-    if (alternativeTitle) {
-      appTitleElement.setAttribute('data-l10n-id', alternativeTitle);
-    }
-    // Trigger the title to re-run font-fit/centering logic
-    appTitleElement.textContent = appTitleElement.textContent;
-  }
-
-  function setupActionableHeader() {
-    header.removeAttribute('action');
-    settingsButton.hidden = false;
-    addButton.hidden = false;
-
-    appTitleElement.setAttribute('data-l10n-id', 'contacts');
-  }
-
-  var lastCustomHeaderCallback;
-
-  var setCancelableHeader = function setCancelableHeader(cb, titleId) {
-    setupCancelableHeader(titleId);
-    header.removeEventListener('action', handleCancel);
-    lastCustomHeaderCallback = cb;
-    header.addEventListener('action', cb);
-  };
-
-  var setNormalHeader = function setNormalHeader() {
-    setupActionableHeader();
-    header.removeEventListener('action', lastCustomHeaderCallback);
-    header.addEventListener('action', handleCancel);
-  };
-
-  var setSelectModeClass = function(element, activityName, activityType) {
-    var classesByType = SELECT_MODE_CLASS[activityName] || {};
-    activityType = Array.isArray(activityType) ? activityType : [activityType];
-    activityType.forEach(function(type) {
-      var classesToAdd = classesByType[type];
-      if (classesToAdd) {
-        element.classList.add.apply(element.classList, classesToAdd);
-      }
+    ActivityHandler.isCancelable().then(isCancelable => {
+      HeaderUI.updateHeader(isCancelable);
     });
-  };
-
-  var checkCancelableActivity = function cancelableActivity() {
-    if (ActivityHandler.currentlyHandling) {
-      var alternativeTitle = null;
-      var activityName = ActivityHandler.activityName;
-      if (activityName === 'pick' || activityName === 'update') {
-        alternativeTitle = 'selectContact';
-      }
-      var groupsList = document.getElementById('groups-list');
-      setSelectModeClass(groupsList, activityName,
-                                              ActivityHandler.activityDataType);
-      setupCancelableHeader(alternativeTitle);
-    } else {
-      setupActionableHeader();
-    }
   };
 
   var contactListClickHandler = function originalHandler(id) {
     initDetails(function onDetailsReady() {
       utils.PerformanceHelper.details.initContactDetails();
       ContactsService.get(id, function findCb(contact, fbContact) {
-
-        // Enable NFC listening is available
-        if ('mozNfc' in navigator) {
-          contacts.NFC.startListening(contact);
-        }
 
         currentContact = contact;
         currentFbContact = fbContact;
@@ -378,7 +279,7 @@ var Contacts = (function() {
   };
 
   var selectList = function selectList(params, fromUpdateActivity) {
-    addButton.classList.add('hide');
+    HeaderUI.hideAddButton();
     contactsList.clearClickHandlers();
     contactsList.handleClick(function addToContactHandler(id) {
       var data = {};
@@ -406,13 +307,6 @@ var Contacts = (function() {
     });
   };
 
-  var sendSms = function sendSms(number) {
-    if (!ActivityHandler.currentlyHandling ||
-        ActivityHandler.currentActivityIs(['open'])) {
-      SmsIntegration.sendSms(number);
-    }
-  };
-
   var handleBack = function handleBack(cb) {
     MainNavigation.back(cb);
   };
@@ -423,23 +317,13 @@ var Contacts = (function() {
       ActivityHandler.postCancel();
       MainNavigation.home();
     } else {
-      handleBack();
-    }
-  };
-
-  var sendEmailOrPick = function sendEmailOrPick(address) {
-    try {
-      // We don't check the email format, lets the email
-      // app do that
-      new MozActivity({
-        name: 'new',
-        data: {
-          type: 'mail',
-          URI: 'mailto:' + address
+      handleBack(function() {
+        // TODO: remove all interaction with detail.js when it works
+        // as an independent view
+        if (MainNavigation.currentView() === 'view-contact-details') {
+          contactsDetails.startNFC(currentContact);
         }
       });
-    } catch (e) {
-      console.error('WebActivities unavailable? : ' + e);
     }
   };
 
@@ -472,10 +356,11 @@ var Contacts = (function() {
     } else {
       initDetails(function onDetails() {
         LazyLoader.load([
-          SHARED_UTILS_PATH + '/misc.js',
-          '/shared/js/contacts/utilities/image_thumbnail.js'],
+          '/shared/js/contacts/import/utilities/misc.js',
+          '/shared/js/contacts/utilities/image_thumbnail.js',
+          '/contacts/js/match_service.js'],
         function() {
-          Contacts.view('Form', function viewLoaded() {
+          Loader.view('Form', function viewLoaded() {
             formReady = true;
             contactsForm = contacts.Form;
             contactsForm.init(TAG_OPTIONS);
@@ -490,14 +375,14 @@ var Contacts = (function() {
     if (settingsReady) {
       callback();
     } else {
-      Contacts.view('Settings', function viewLoaded() {
+      Loader.view('Settings', function viewLoaded() {
         LazyLoader.load(['/contacts/js/utilities/sim_dom_generator.js',
           '/contacts/js/utilities/normalizer.js',
-          SHARED_UTILS_PATH + '/misc.js',
+          '/shared/js/contacts/import/utilities/misc.js',
           '/shared/js/mime_mapper.js',
-          SHARED_UTILS_PATH + '/vcard_parser.js',
+          '/shared/js/contacts/import/utilities/vcard_parser.js',
           '/contacts/js/utilities/icc_handler.js',
-          SHARED_UTILS_PATH + '/sdcard.js',
+          '/shared/js/contacts/import/utilities/sdcard.js',
           '/shared/js/date_time_helper.js'], function() {
           settingsReady = true;
           contacts.Settings.init();
@@ -511,12 +396,13 @@ var Contacts = (function() {
     if (detailsReady) {
       callback();
     } else {
-      Contacts.view('Details', function viewLoaded() {
+      Loader.view('Details', function viewLoaded() {
         LazyLoader.load(
-          [SHARED_UTILS_PATH + '/misc.js',
+          ['/shared/js/contacts/import/utilities/misc.js',
            '/dialer/js/telephony_helper.js',
            '/shared/js/contacts/sms_integration.js',
-           '/shared/js/contacts/contacts_buttons.js'],
+           '/shared/js/contacts/contacts_buttons.js',
+           '/contacts/js/match_service.js'],
         function() {
           detailsReady = true;
           contactsDetails = contacts.Details;
@@ -556,9 +442,6 @@ var Contacts = (function() {
 
   var setCurrent = function c_setCurrent(contact) {
     currentContact = contact;
-    if ('mozNfc' in navigator && contacts.NFC) {
-      contacts.NFC.startListening(contact);
-    }
 
     if (contacts.Details) {
       contacts.Details.setContact(contact);
@@ -579,10 +462,10 @@ var Contacts = (function() {
   };
 
   var hideOverlay = function c_hideOverlay() {
-    Contacts.utility('Overlay', function _loaded() {
+    Loader.utility('Overlay', function _loaded() {
       contacts.List.show();
       utils.overlay.hide();
-    }, SHARED_UTILS);
+    });
   };
 
   var showSettings = function showSettings() {
@@ -598,15 +481,11 @@ var Contacts = (function() {
   };
 
   var enterSearchMode = function enterSearchMode(evt) {
-    Contacts.view('Search', function viewLoaded() {
+    Loader.view('Search', function viewLoaded() {
       contacts.List.initSearch(function onInit() {
-        var searchList = document.getElementById('search-list'),
-            activityName = ActivityHandler.activityName,
-            activityType = ActivityHandler.activityDataType;
-        setSelectModeClass(searchList, activityName, activityType);
         contacts.Search.enterSearchMode(evt);
       });
-    }, SHARED_CONTACTS);
+    });
   };
 
   var initEventListeners = function initEventListener() {
@@ -653,17 +532,13 @@ var Contacts = (function() {
       '/shared/js/contacts/contacts_shortcuts.js',
       '/contacts/js/contacts_tag.js',
       '/contacts/js/tag_options.js',
+      '/contacts/js/loader.js',
       '/shared/js/text_normalizer.js',
-      SHARED_UTILS_PATH + '/status.js',
+      '/shared/js/contacts/import/utilities/status.js',
       '/shared/js/contacts/utilities/dom.js',
       '/shared/js/confirm.js',
       document.getElementById('confirmation-message')
     ];
-
-    // Lazyload nfc.js if NFC is available
-    if ('mozNfc' in navigator) {
-      lazyLoadFiles.push('/contacts/js/nfc.js');
-    }
 
     LazyLoader.load(lazyLoadFiles, function() {
       loadAsyncScriptsDeferred.resolve();
@@ -786,15 +661,14 @@ var Contacts = (function() {
   };
 
   var initContacts = function initContacts(evt) {
-    initContainers();
     initEventListeners();
     utils.PerformanceHelper.contentInteractive();
     utils.PerformanceHelper.chromeInteractive();
     window.setTimeout(Contacts && Contacts.onLocalized);
     if (window.navigator.mozSetMessageHandler && window.self == window.top) {
-      LazyLoader.load([SHARED_UTILS_PATH + '/misc.js',
-        SHARED_UTILS_PATH + '/vcard_reader.js',
-        SHARED_UTILS_PATH + '/vcard_parser.js'],
+      LazyLoader.load(['/shared/js/contacts/import/utilities/misc.js',
+        '/shared/js/contacts/import/utilities/vcard_reader.js',
+        '/shared/js/contacts/import/utilities/vcard_parser.js'],
        function() {
         var actHandler = ActivityHandler.handle.bind(ActivityHandler);
         window.navigator.mozSetMessageHandler('activity', actHandler);
@@ -804,7 +678,7 @@ var Contacts = (function() {
     document.addEventListener('visibilitychange', function visibility(e) {
       if (document.hidden === false &&
           MainNavigation.currentView() === 'view-settings') {
-        Contacts.view('Settings', function viewLoaded() {
+        Loader.view('Settings', function viewLoaded() {
           contacts.Settings.updateTimestamps();
         });
       }
@@ -821,105 +695,6 @@ var Contacts = (function() {
     LazyLoader.load('/shared/js/l10n_date.js');
   });
 
-  /**
-   * Specifies dependencies for resources
-   * E.g., mapping Facebook as a dependency of views
-   */
-  var dependencies = {
-    views: {
-      Settings: loadFacebook,
-      Details: loadFacebook,
-      Form: loadFacebook,
-      Search: function(callback) {
-        LazyLoader.load(SHARED_PATH + '/utilities.js', callback);
-      }
-    },
-    utilities: {},
-    sharedUtilities: {}
-  };
-
-  // Mapping of view names to element IDs
-  // TODO: Having a more standardized way of specifying this would be nice.
-  // Then we could get rid of this mapping entirely
-  // E.g., #details-view, #list-view, #form-view
-  var elementMapping = {
-    details: 'view-contact-details',
-    form: 'view-contact-form',
-    settings: 'settings-wrapper',
-    search: 'search-view',
-    multiple_select: 'multiple-select-view',
-    overlay: 'loading-overlay',
-    confirm: 'confirmation-message',
-    ice: 'ice-view'
-  };
-
-  function load(type, file, callback, path) {
-    /**
-     * Performs the actual lazy loading
-     * Called once all dependencies are met
-     */
-    function doLoad() {
-      var name = file.toLowerCase();
-      var finalPath = 'js' + '/' + type;
-
-      switch (path) {
-        case SHARED:
-          finalPath = SHARED_PATH;
-          break;
-        case SHARED_UTILS:
-          finalPath = SHARED_UTILS_PATH;
-          break;
-        case SHARED_CONTACTS:
-          finalPath = SHARED_CONTACTS_PATH;
-          break;
-        default:
-          finalPath = 'js' + '/' + type;
-      }
-
-      var toLoad = [finalPath + '/' + name + '.js'];
-      var node = document.getElementById(elementMapping[name]);
-      if (node) {
-        toLoad.unshift(node);
-      }
-
-      LazyLoader.load(toLoad, function() {
-          if (callback) {
-            callback();
-          }
-        });
-    }
-
-    if (dependencies[type][file]) {
-      return dependencies[type][file](doLoad);
-    }
-
-    doLoad();
-  }
-
-  /**
-   * Loads a view from the views/ folder
-   * @param {String} view name.
-   * @param {Function} callback.
-   */
-  function loadView(view, callback, type) {
-    load('views', view, callback, type);
-  }
-
-  /**
-   * Loads a utility from the utilities/ folder
-   * @param {String} utility name.
-   * @param {Function} callback.
-   */
-  function loadUtility(utility, callback, type) {
-    load('utilities', utility, callback, type);
-  }
-
-  var updateSelectCountTitle = function updateSelectCountTitle(count) {
-    navigator.mozL10n.setAttributes(editModeTitleElement,
-                                    'SelectedTxt',
-                                    {n: count});
-  };
-
   window.addEventListener('DOMContentLoaded', function onLoad() {
     window.removeEventListener('DOMContentLoaded', onLoad);
   });
@@ -927,9 +702,6 @@ var Contacts = (function() {
   return {
     'goBack' : handleBack,
     'cancel': handleCancel,
-    'sendSms': sendSms,
-    'sendEmailOrPick': sendEmailOrPick,
-    'checkCancelableActivity': checkCancelableActivity,
     'showForm': showForm,
     'setCurrent': setCurrent,
     'onLocalized': onLocalized,
@@ -940,19 +712,8 @@ var Contacts = (function() {
     'updateContactDetail': updateContactDetail,
     'loadFacebook': loadFacebook,
     'close': close,
-    'view': loadView,
-    'utility': loadUtility,
-    'updateSelectCountTitle': updateSelectCountTitle,
-    'setCancelableHeader': setCancelableHeader,
-    'setNormalHeader': setNormalHeader,
     get asyncScriptsLoaded() {
       return loadAsyncScriptsDeferred.promise;
-    },
-    get SHARED_UTILITIES() {
-      return SHARED_UTILS;
-    },
-    get SHARED_CONTACTS() {
-      return SHARED_CONTACTS;
     }
   };
 })();

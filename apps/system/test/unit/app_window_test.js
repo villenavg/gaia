@@ -1,7 +1,8 @@
-/* global AppWindow, ScreenLayout, MockService,
+/* global AppWindow, ScreenLayout, MockService, IconsHelper,
       MocksHelper, BaseModule, MockContextMenu,
       MockAppTransitionController, MockPermissionSettings, DocumentFragment,
-      MockAudioChannelController, AppChrome */
+      MockAudioChannelController, AppChrome,
+      MockWebManifestHelper, MockPromise */
 'use strict';
 
 requireApp('system/shared/test/unit/mocks/mock_manifest_helper.js');
@@ -11,15 +12,20 @@ requireApp('system/test/unit/mock_context_menu.js');
 requireApp('system/test/unit/mock_applications.js');
 requireApp('system/test/unit/mock_app_chrome.js');
 requireApp('system/test/unit/mock_screen_layout.js');
+requireApp('system/test/unit/mock_lazy_loader.js');
 requireApp('system/test/unit/mock_app_transition_controller.js');
 requireApp('system/test/unit/mock_audio_channel_controller.js');
 requireApp('system/shared/test/unit/mocks/mock_service.js');
 requireApp('system/shared/test/unit/mocks/mock_permission_settings.js');
+require('/shared/test/unit/mocks/mock_web_manifest_helper.js');
+require('/shared/test/unit/mocks/mock_promise.js');
+require('/shared/test/unit/mocks/mock_icons_helper.js');
 
 var mocksForAppWindow = new MocksHelper([
   'Applications', 'SettingsListener',
-  'ManifestHelper', 'ScreenLayout', 'AppChrome',
-  'AppTransitionController', 'Service'
+  'ManifestHelper', 'WebManifestHelper',
+  'ScreenLayout', 'AppChrome', 'IconsHelper',
+  'AppTransitionController', 'Service', 'LazyLoader'
 ]).init();
 
 suite('system/AppWindow', function() {
@@ -183,6 +189,14 @@ suite('system/AppWindow', function() {
       type: 'certified'
     },
     origin: 'app://www.fake4'
+  };
+
+  var fakeAppWithName = {
+    url: 'http://fakeapp.com/index.html',
+    manifest: {
+      name: 'Fake App Name'
+    },
+    origin: 'http://fakeapp.com'
   };
 
   var fakeInputAppConfig = {
@@ -1446,13 +1460,19 @@ suite('system/AppWindow', function() {
       var app1 = new AppWindow(fakeAppConfig1);
       injectFakeMozBrowserAPI(app1.browser.element);
       app1.setVisible(false);
-
-      var stub_showFrame = this.sinon.stub(app1,
+      var spyShowFrame = this.sinon.spy(app1,
         '_showFrame');
+
+      var mozBrowserSetVisible = this.sinon.stub(app1.browser.element,
+                                                 'setVisible');
 
       app1.setVisible(true);
       assert.isFalse(app1.screenshotOverlay.classList.contains('visible'));
-      assert.isTrue(stub_showFrame.called);
+      assert.isTrue(spyShowFrame.called);
+      assert.isFalse(app1.element.classList.contains('inactive'));
+      assert.equal(app1.browser.element.getAttribute('aria-hidden'), 'false');
+      assert.isTrue(mozBrowserSetVisible.calledOnce);
+      assert.isTrue(mozBrowserSetVisible.calledWith(true));
     });
 
     test('setVisible: true, multiple times', function() {
@@ -1473,11 +1493,19 @@ suite('system/AppWindow', function() {
     test('setVisible: false', function() {
       var app1 = new AppWindow(fakeAppConfig1);
       injectFakeMozBrowserAPI(app1.browser.element);
-      var stub_hideFrame = this.sinon.stub(app1,
+      var spyHideFrame = this.sinon.spy(app1,
         '_hideFrame');
 
+      var mozBrowserSetVisible = this.sinon.stub(app1.browser.element,
+                                                 'setVisible');
+
+
       app1.setVisible(false);
-      assert.isTrue(stub_hideFrame.called);
+      assert.isTrue(spyHideFrame.called);
+      assert.isTrue(app1.element.classList.contains('inactive'));
+      assert.equal(app1.browser.element.getAttribute('aria-hidden'), 'true');
+      assert.isTrue(mozBrowserSetVisible.calledOnce);
+      assert.isTrue(mozBrowserSetVisible.calledWith(false));
     });
 
     test('setVisible: false, multiple times', function() {
@@ -2060,6 +2088,18 @@ suite('system/AppWindow', function() {
       app1.config.url = url;
     });
 
+    test('Locationchange event resets name and title', function() {
+      var app1 = new AppWindow(fakeWrapperConfig);
+
+      app1.handleEvent({
+        type: 'mozbrowserlocationchange',
+        detail: 'http://example.com/page.html'
+      });
+
+      assert.equal(app1.name, 'example.com');
+      assert.equal(app1.title, 'http://example.com/page.html');
+    });
+
     test('Scroll event', function() {
       var app4 = new AppWindow(fakeAppConfig4);
       app4.manifest = null;
@@ -2463,6 +2503,87 @@ suite('system/AppWindow', function() {
         assert.equal(publishStub.getCall(i).args[1], state);
       });
     });
+
+    suite('mozbrowsermanifestchange event', function() {
+      var manifestURL = 'https://examples.com/webapp.json';
+      var manifestResult = {
+        'short_name': 'App', 'name': 'My App',
+        'icons': [{ src: new window.URL('icon.png', manifestURL) }]
+      };
+
+      setup(function() {
+        this.sinon.stub(window, 'Promise', MockPromise);
+      });
+
+      test('valid web manifest', function() {
+        var app1 = new AppWindow(fakeAppConfig1);
+        var fakeManifestResultPromise = new MockPromise();
+        this.sinon.stub(window.Promise, 'resolve')
+                        .returns(fakeManifestResultPromise);
+        app1.handleEvent({
+          type: 'mozbrowsermanifestchange',
+          detail: {
+            'href': manifestURL
+          }
+        });
+        fakeManifestResultPromise.mFulfillToValue(manifestResult);
+
+        assert.equal(app1.webManifestURL, manifestURL);
+        assert.ok(app1.webManifest);
+        assert.equal(app1.webManifest.name, 'My App');
+        assert.equal(app1.name, 'App');
+        assert.ok(app1.webManifest.icons[0]);
+      });
+
+      test('invalid web manifest url', function() {
+        var app1 = new AppWindow(fakeAppConfig1);
+        this.sinon.stub(MockWebManifestHelper, 'getManifest').throws();
+        app1.handleEvent({
+          type: 'mozbrowsermanifestchange',
+          detail: {
+            'href': null
+          }
+        });
+
+        assert.ok(!app1.webManifest,
+                  'webManifest property not populated without webManifestURL');
+      });
+    });
+  });
+
+  test('getIconBlob', function() {
+    var blobPromise = new MockPromise();
+    this.sinon.stub(window, 'Promise', MockPromise);
+    this.sinon.stub(IconsHelper, 'getIconBlob', function() {
+      return blobPromise;
+    });
+    var app1 = new AppWindow(fakeAppConfig1);
+    var dataURI = 'data:image/png;base64,abc+';
+    this.sinon.stub(app1, 'getIconBlob').returns(blobPromise);
+
+    var promisedIcon = app1.getSiteIconUrl();
+    promisedIcon.then(function(icon) {
+      assert.ok(icon && icon.url);
+      assert.equal(icon.url, dataURI);
+    });
+    blobPromise.mFulfillToValue({ url: dataURI });
+  });
+
+  test('getSiteIconUrl', function() {
+    this.sinon.stub(window, 'Promise', MockPromise);
+    var app1 = new AppWindow(fakeAppConfig1);
+    app1.webManifestURL = 'https://example.com/webapp.json';
+    app1.webManifest = {};
+    var blobPromise = new MockPromise();
+    var dataURI = 'data:image/png;base64,abc+';
+    this.sinon.stub(app1, 'getIconBlob').returns(blobPromise);
+
+    var promisedIcon = app1.getSiteIconUrl();
+    promisedIcon.then(function(icon) {
+      assert.ok(icon && icon.url);
+      assert.equal(icon.url, dataURI);
+    });
+    blobPromise.mFulfillToValue({ url: dataURI });
   });
 
   test('Change URL at run time', function() {
@@ -2477,11 +2598,19 @@ suite('system/AppWindow', function() {
     assert.isTrue(app1.browser.element.src.indexOf('http://changed.url') >= 0);
   });
 
-  test('Launch wrapper should have name from title config', function() {
+  test('Launch wrapper should take title from app name', function() {
+    var app1 = new AppWindow(fakeAppWithName);
+    this.sinon.clock.tick();
+    assert.equal(app1.name, 'Fake App Name');
+    assert.equal(app1.identificationTitle.textContent, 'Fake App Name');
+  });
+
+  test('Launch wrapper should take title from hostname if no name provided',
+    function() {
     var app1 = new AppWindow(fakeWrapperConfig);
     this.sinon.clock.tick();
-    assert.equal(app1.name, 'Fakebook');
-    assert.equal(app1.identificationTitle.textContent, 'Fakebook');
+    assert.equal(app1.name, 'www.fake5');
+    assert.equal(app1.identificationTitle.textContent, 'www.fake5');
   });
 
   test('revive browser', function() {

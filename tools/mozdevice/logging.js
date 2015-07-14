@@ -117,13 +117,14 @@ Logging.prototype.clear = function() {
   if (this.device.properties['ro.build.version.sdk'] >= 21) {
     var logging = this;
 
-    return new Command()
-      .append(DATE_COMMAND)
-      .exec()
+    // Sleep 1 second to make sure we won't receive any logs from past as the
+    // date command we're using returns the current time in seconds.
+    return this.adbShell('sleep 1; ' + DATE_COMMAND)
       .then(function(output) {
         logging.clearTimestamp = output;
       });
   }
+
   return this.adbShell('logcat -c');
 };
 
@@ -197,11 +198,11 @@ Logging.prototype.start = function() {
   if (device.properties['ro.build.version.sdk'] >= 21) {
     if (this.clearTimestamp) {
       args.push('-T');
-      args.push(this.clearTimestamp);
+      args.push('"' + this.clearTimestamp.replace(/\r?\n|\r/, "") + '"');
     } else {
-      args.unshift('NOW=$(' + DATE_COMMAND + ');');
+      args.unshift('NOW=$(adb shell ' + DATE_COMMAND + ');');
       args.push('-T');
-      args.push('"$NOW"');
+      args.push('"${NOW//[$\'\r\n\']}"');
     }
   }
 
@@ -242,7 +243,9 @@ Logging.prototype.restart = function() {
 Logging.prototype.stop = function() {
   if (currentProcess) {
     debug('Stopping logging process');
-    process.kill(-currentProcess.pid, 'SIGINT');
+    try {
+      process.kill(-currentProcess.pid, 'SIGINT');
+    } catch(e) {}
     currentStream.removeAllListeners();
     currentProcess = null;
     currentStream = null;

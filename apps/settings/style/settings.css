@@ -285,7 +285,9 @@ body[data-filter-by="connectivity"] #root > div [data-category="connectivity"] {
 .disabled p,
 .disabled h2,
 .disabled label,
-.disabled select {
+.disabled select,
+.disabled gaia-checkbox,
+.disabled gaia-switch {
   opacity: 0.6;
   pointer-events: none;
 }
@@ -911,7 +913,7 @@ ul li > label.range-icons.volume input {
   white-space: normal;
 }
 
-#sendFeedback .pack-checkbox span {
+#sendFeedback gaia-checkbox label {
   left: 3rem;
   right: auto;
   top: 2rem;
@@ -1066,6 +1068,12 @@ ul li > label.range-icons.volume input {
   -moz-padding-end: 4rem;
 }
 
+/* Style components in developer panel to match existing styles. */
+#developer ul li > gaia-checkbox,
+#developer-hud ul li > gaia-checkbox {
+  padding: 1.5rem 0;
+}
+
 #developer ul li > label.pack-switch > span,
 #developer-hud ul li > label.pack-switch > span {
   -moz-padding-end: 9rem;
@@ -1146,7 +1154,7 @@ html[dir="rtl"] #dateTime .timezone.disabled select {
   right: 1rem;
 }
 
-html[dir="rtl"] #sendFeedback .pack-checkbox span {
+html[dir="rtl"] #sendFeedback gaia-checkbox label {
   left: auto;
   right: 3rem;
 }

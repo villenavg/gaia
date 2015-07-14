@@ -45,6 +45,7 @@
     <!-- <script defer src="/shared/elements/gaia_confirm/script.js"></script> -->
     <!-- <script defer src="/shared/elements/gaia_menu/script.js"></script> -->
     <script defer src="shared/elements/gaia_buttons/script.js"></script>
+    <script defer src="shared/elements/gaia_checkbox/script.js"></script>
     <script defer src="shared/elements/gaia_progress/script.js"></script>
     <script defer src="shared/elements/gaia_subheader/script.js"></script>
     <script defer src="shared/elements/gaia-header/dist/gaia-header.js"></script>
@@ -139,6 +140,7 @@
      <script defer src="shared/js/settings_listener.js"></script>
      <script defer src="shared/js/async_storage.js"></script>
      <script defer src="shared/js/manifest_helper.js"></script>
+     <script defer src="shared/js/web_manifest_helper.js"></script>
      <script defer src="shared/js/findmydevice_iac_api.js"></script>
      <script defer src="shared/js/settings_helper.js"></script>
      <script defer src="shared/js/default_activity_helper.js"></script>
@@ -177,6 +179,7 @@
      <script defer src="/shared/js/download/download_ui.js">
      <script defer src="/shared/js/download/download_formatter.js">
      <script defer src="/shared/js/download/download_store.js">
+     <script defer src="shared/js/web_manifest_helper.js"></script>
      <script defer src="/shared/js/icons_helper.js">
      <script defer src="shared/js/url_helper.js"></script>
      <script defer src="shared/js/date_time_helper.js"></script>
@@ -184,6 +187,7 @@
      <script defer src="shared/js/lockscreen_slide.js"></script>
      <script defer src="shared/js/lockscreen_connection_info_manager.js"></script>
      <script defer src="shared/js/achievements-service.js"></script>
+     <script defer src="/shared/js/passcode_helper.js"></script>
     -->
   </head>
 
@@ -217,6 +221,10 @@
            data-z-index-level="rocketbar-backdrop">
       </div>
       <div id="rocketbar-results" class="hidden" data-z-index-level="rocketbar-results"></div>
+
+      <div id="windows" data-z-index-level="app">
+        <!-- application windows are added here -->
+      </div>
 
       <div id="utility-tray" data-z-index-level="utility-tray">
         <div id="notifications">
@@ -315,11 +323,7 @@
         </div>
       </div>
 
-      <div id="windows" data-z-index-level="app">
-        <!-- application windows are added here -->
-      </div>
-
-      <!-- XXX: Before we can make LockScree as a iframe or app, we need this to split LockScreen and System part in this way (Bug 1057198) -->
+      <!-- XXX: Before we can make LockScreen as a iframe or app, we need this to split LockScreen and System part in this way (Bug 1057198) -->
       <div id="lockscreen-frame-placeholder"></div>
 
       <div id="dialog-overlay" data-z-index-level="dialog-overlay">
@@ -454,11 +458,9 @@
               <div id="permission-more-info-box" class="hidden"> </div>
             </div>
             <div id="permission-remember-section">
-              <label class="pack-checkbox">
-                <input type="checkbox" id="permission-remember-checkbox" />
-                <span></span>
+              <gaia-checkbox id="permission-remember-checkbox" class="inline">
+                <label data-l10n-id="remember-my-choice" id="permission-remember-label"></label>
               </label>
-              <a data-l10n-id="remember-my-choice" id="permission-remember-label"></a>
             </div>
             <div id="permission-device-selector"></div>
             <ul id="permission-devices">

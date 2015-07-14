@@ -222,7 +222,7 @@ var ConversationView = {
     Compose.init('messages-compose-form');
 
     // In case of input, we have to resize the input following UX Specs.
-    Compose.on('input', this.messageComposerInputHandler.bind(this));
+    Compose.on('input', this.onMessageContentChange.bind(this));
     Compose.on('subject-change', this.onSubjectChange.bind(this));
     Compose.on('segmentinfochange', this.onSegmentInfoChange.bind(this));
 
@@ -348,7 +348,7 @@ var ConversationView = {
         // update composer header whenever recipients change
         this.updateComposerHeader();
 
-        this.emit('recipientschange');
+        Compose.refresh();
       }
     }).bind(this);
 
@@ -373,6 +373,39 @@ var ConversationView = {
       }.bind(this));
     }
     this.toggleRecipientSuggestions();
+  },
+
+  hasValidRecipients() {
+    if (this.recipients.numbers.length) {
+      return true;
+    }
+
+    var notValidatedNumber = this.recipients.inputValue;
+    return !!notValidatedNumber && isFinite(notValidatedNumber);
+  },
+
+  hasEmailRecipients() {
+    if (!Settings.supportEmailRecipient) {
+      return false;
+    }
+
+    /**
+     * When non-contact recipient is tapped by user, Recipients component
+     * removes recipient pill, fires "remove" event and only then populates
+     * recipients input with the content to edit.
+     *
+     * In case we have only one recipient, then in "remove" handler we'll have
+     * both empty recipients list and input (since input is not populated yet).
+     * At the same time in Conversation view we listen for the modification of
+     * recipients input. So we have two consequent events where we want to know
+     * how many and what recipients we have to possibly disable send button and
+     * change message type if we have email recipient. That leads to two
+     * consequent message type change banners.
+     *
+     * To preserve original behavior and avoid double banner issue we just don't
+     * try to detect email in recipients input.
+     */
+    return this.recipients.numbers.some(Utils.isEmailAddress);
   },
 
   initSentAudio: function conv_initSentAudio() {
@@ -414,7 +447,12 @@ var ConversationView = {
     this.header.setAttribute('action', icon);
   },
 
-  messageComposerInputHandler: function conv_messageInputHandler(event) {
+  onMessageContentChange() {
+    // Track when content is edited for draft replacement case
+    if (this.draft) {
+      this.draft.isEdited = true;
+    }
+
     if (Compose.type === 'sms') {
       this.hideMaxLengthNotice();
       return;
@@ -442,7 +480,6 @@ var ConversationView = {
   },
 
   showMaxLengthNotice: function conv_showMaxLengthNotice(opts) {
-    Compose.lock();
     navigator.mozL10n.setAttributes(
       this.maxLengthNotice.querySelector('p'), opts.l10nId, opts.l10nArgs
     );
@@ -450,7 +487,6 @@ var ConversationView = {
   },
 
   hideMaxLengthNotice: function conv_hideMaxLengthNotice() {
-    Compose.unlock();
     this.maxLengthNotice.classList.add('hide');
   },
 
@@ -516,6 +552,11 @@ var ConversationView = {
 
     var prevPanel = args.meta.prev;
 
+    var emailThread = Settings.supportEmailRecipient &&
+      Threads.active.participants.some(Utils.isEmailAddress);
+
+    Compose.setupLock({ forceType: () => emailThread ? 'mms' : null });
+
     // If transitioning from composer, we don't need to notify about type
     // conversion but only after the type of the thread is set
     // (afterEnterThread)
@@ -528,9 +569,7 @@ var ConversationView = {
     }
 
     // Call button should be shown only for non-email single-participant thread
-    if (Threads.active.participants.length === 1 &&
-        (!Settings.supportEmailRecipient ||
-         !Utils.isEmailAddress(Threads.active.participants[0]))) {
+    if (Threads.active.participants.length === 1 && !emailThread) {
       this.callNumberButton.classList.remove('hide');
     }
 
@@ -666,7 +705,7 @@ var ConversationView = {
     if (params.number) {
       parametersPromise = Contacts.findByAddress(params.number).then(
       (contacts) => {
-        if (!contacts || !contacts.length) {
+        if (!contacts.length) {
           throw new Error('No contacts found for %s', params.number);
         }
 
@@ -739,7 +778,7 @@ var ConversationView = {
     }
   },
 
-  beforeEnterComposer: function conv_beforeEnterComposer(args) {
+  beforeEnterComposer() {
     Recipients.View.isFocusable = true;
 
     this.enableConvertNoticeBanners();
@@ -751,6 +790,13 @@ var ConversationView = {
     this.cleanFields();
     this.initRecipients();
     this.updateComposerHeader();
+
+    Compose.setupLock({
+      canSend: () => this.hasValidRecipients(),
+      // Null means that we want to use default type detection strategy.
+      forceType: () => this.hasEmailRecipients() ? 'mms' : null
+    });
+
     this.container.textContent = '';
     this.threadMessages.classList.add('new');
 
@@ -933,6 +979,10 @@ var ConversationView = {
   },
 
   onSubjectChange: function conv_onSubjectChange() {
+    if (this.draft) {
+      this.draft.isEdited = true;
+    }
+
     if (Compose.isSubjectVisible && Compose.isSubjectMaxLength()) {
       this.showSubjectMaxLengthNotice();
     } else {
@@ -1061,7 +1111,7 @@ var ConversationView = {
   showNewMessageNotice: function conv_showNewMessageNotice(message) {
     Contacts.findByPhoneNumber(message.sender).then((contacts) => {
       var sender = message.sender;
-      if (contacts && contacts.length) {
+      if (contacts.length) {
         var details = Utils.getContactDetails(sender, contacts[0]);
         sender = details.title || sender;
         // Get the first name
@@ -1345,8 +1395,7 @@ var ConversationView = {
 
     // The carrier banner is meaningless and confusing in
     // group message mode.
-    if (thread.participants.length === 1 &&
-        (contacts && contacts.length)) {
+    if (thread.participants.length === 1 && contacts.length) {
 
       address = Settings.supportEmailRecipient && Utils.isEmailAddress(number) ?
                 contacts[0].email : contacts[0].tel;
@@ -2538,7 +2587,7 @@ var ConversationView = {
       );
     }
 
-    this.emit('recipientschange');
+    Compose.refresh();
   },
 
   exactContact: function conv_exactContact(fValue) {
@@ -2551,7 +2600,7 @@ var ConversationView = {
       // that was actually a "delete" that removed the last
       // character in the recipient input field,
       // eg. type "a", then delete it.
-      return Promise.resolve(null);
+      return Promise.resolve([]);
     }
 
     return Contacts.findByString(fValue);
@@ -2577,7 +2626,7 @@ var ConversationView = {
     // If there is greater than zero matches,
     // process the first found contact into
     // an accepted Recipient.
-    if (contacts && contacts.length) {
+    if (contacts.length) {
       isInvalid = false;
       record = contacts[0];
       var values = props.reduce((values, prop) => {
@@ -2676,7 +2725,7 @@ var ConversationView = {
       return;
     }
 
-    if (!contacts || !contacts.length) {
+    if (!contacts.length) {
       return;
     }
 
@@ -2757,7 +2806,7 @@ var ConversationView = {
     }
 
     Contacts.findByAddress(number).then(function(contacts) {
-      var isContact = contacts && contacts.length;
+      var isContact = contacts.length;
       var contact = contacts[0];
       var id;
 
@@ -2914,12 +2963,6 @@ var ConversationView = {
       return;
     }
 
-    // Update thread timestamp. Will be removed in bug 958105.
-    var thread = Threads.active;
-    if (thread) {
-      thread.timestamp = Date.now();
-    }
-
     Drafts.delete(this.draft).store();
 
     this.draft = null;
@@ -2949,11 +2992,6 @@ var ConversationView = {
       subject: Compose.getSubject(),
       type: Compose.type
     });
-
-    // Update thread timestamp with draft's one. Will be removed in bug 958105.
-    if (thread) {
-      thread.timestamp = draft.timestamp;
-    }
 
     Drafts.add(draft);
 
@@ -3021,7 +3059,7 @@ Object.defineProperty(exports, 'ConversationView', {
   get: function () {
     delete exports.ConversationView;
 
-    var allowedEvents = ['recipientschange', 'visually-loaded'];
+    var allowedEvents = ['visually-loaded'];
     return (exports.ConversationView =
       EventDispatcher.mixin(ConversationView, allowedEvents));
   },

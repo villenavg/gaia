@@ -1,11 +1,11 @@
 'use strict';
 
-/* global Contacts, contacts, ActivityHandler, SmsIntegration, LazyLoader,
+/* global Contacts, contacts, Loader, ActivityHandler, LazyLoader,
           MockContactsListObj, MockCookie, MockMozL10n,
           MockNavigationStack, MockUtils, MocksHelper,
-          MockContactAllFields, MockContactDetails, MockContactsNfc,
-          MockContactsSearch, MockContactsSettings, Mockfb,
-          MockImportStatusData, MockMozContacts, ContactsService
+          MockContactAllFields, MockContactDetails,
+          MockContactsSearch, MockContactsSettings, Mockfb, MockLoader,
+          MockImportStatusData, MockMozContacts, ContactsService, HeaderUI
 */
 
 requireApp('communications/contacts/services/contacts.js');
@@ -18,13 +18,12 @@ requireApp('communications/contacts/test/unit/mock_event_listeners.js');
 requireApp('communications/contacts/test/unit/mock_navigation.js');
 // requireApp('communications/contacts/test/unit/mock_main_navigation.js');
 requireApp('communications/contacts/test/unit/mock_activities.js');
-requireApp('communications/contacts/test/unit/mock_sms_integration.js');
 requireApp('communications/contacts/test/unit/mock_contacts_details.js');
-requireApp('communications/contacts/test/unit/mock_contacts_nfc.js');
 requireApp('communications/contacts/test/unit/mock_contacts_search.js');
 requireApp('communications/contacts/test/unit/mock_contacts_settings.js');
 requireApp('communications/contacts/test/unit/mock_fb.js');
 requireApp('communications/contacts/test/unit/mock_import_status_data.js');
+requireApp('communications/contacts/test/unit/mock_loader.js');
 require('/shared/test/unit/mocks/mock_mozContacts.js');
 
 require('/shared/test/unit/mocks/mock_lazy_loader.js');
@@ -34,8 +33,7 @@ var mocksForStatusBar = new MocksHelper([
   'ActivityHandler',
   'Cache',
   'DatastoreMigration',
-  'LazyLoader',
-  'SmsIntegration'
+  'LazyLoader'
 ]).init();
 
 if (!window.navigationStack) {
@@ -72,6 +70,7 @@ suite('Contacts', function() {
   var realImportStatusData;
   var mockNavigation;
   var realMozContacts;
+  var realLoader;
 
   mocksForStatusBar.attachTestHelpers();
 
@@ -88,7 +87,6 @@ suite('Contacts', function() {
     window.contacts = {};
     window.contacts.List = MockContactsListObj;
     window.contacts.Details = MockContactDetails;
-    window.contacts.NFC = MockContactsNfc;
     window.contacts.Search = MockContactsSearch;
     window.contacts.Settings = MockContactsSettings;
 
@@ -105,6 +103,9 @@ suite('Contacts', function() {
     realNavigationStack = window.navigationStack;
     window.navigationStack = MockNavigationStack;
 
+    realLoader = window.Loader;
+    window.Loader = MockLoader;
+
     sinon.spy(window, 'navigationStack');
     requireApp('communications/contacts/js/utilities/performance_helper.js');
     requireApp('communications/contacts/js/main_navigation.js');
@@ -118,12 +119,13 @@ suite('Contacts', function() {
     window.utils = realUtils;
     window.fb = realFb;
     window.ImportStatusData = realImportStatusData;
+    window.Loader = realLoader;
 
     window.navigationStack.restore();
     window.navigationStack = realNavigationStack;
   });
 
-  setup(function() {
+  setup(function(done) {
     this.sinon.spy(window.utils.PerformanceHelper, 'chromeInteractive');
     this.sinon.spy(window.utils.PerformanceHelper, 'contentInteractive');
     loadBodyHTML('/contacts/index.html');
@@ -140,6 +142,8 @@ suite('Contacts', function() {
 
     Contacts.init();
     mockNavigation = window.navigationStack.firstCall.thisValue;
+
+    requireApp('communications/contacts/js/header_ui.js', done);
 
     navigator.mozL10n.fireOnce();
   });
@@ -257,41 +261,8 @@ suite('Contacts', function() {
       sinon.assert.notCalled(window.ActivityHandler.postCancel);
     });
 
-    suite('> Send sms', function() {
-      var number = '+445312973212';
-      setup(function() {
-        this.sinon.spy(SmsIntegration, 'sendSms');
-      });
-
-      test('> send sms', function() {
-        Contacts.sendSms(number);
-
-        sinon.assert.calledWith(SmsIntegration.sendSms, number);
-      });
-
-      test('> dont send sms while in an activity', function() {
-        window.ActivityHandler.currentlyHandling = true;
-        Contacts.sendSms(number);
-
-        sinon.assert.notCalled(SmsIntegration.sendSms);
-        window.ActivityHandler.currentlyHandling = false;
-      });
-
-      test('> send the sms if the activity is a OPEN one', function() {
-        window.ActivityHandler.currentlyHandling = true;
-        window.ActivityHandler.activityName = 'open';
-        Contacts.sendSms(number);
-
-        sinon.assert.calledWith(SmsIntegration.sendSms, number);
-
-        window.ActivityHandler.currentlyHandling = false;
-        window.ActivityHandler.activityName = 'view';
-      });
-    });
-
     suite('> CancelableActivity', function() {
-      var settingsButton, header, addButton, appTitleElement,
-          prevCurrentlyHandling, prevActivityName, prevActivityDataType;
+      var prevCurrentlyHandling, prevActivityName, prevActivityDataType;
 
       suiteSetup(function() {
         prevCurrentlyHandling = window.ActivityHandler.currentlyHandling;
@@ -301,10 +272,6 @@ suite('Contacts', function() {
       });
 
       setup(function() {
-        settingsButton = document.getElementById('settings-button');
-        header = document.getElementById('contacts-list-header');
-        addButton = document.getElementById('add-contact-button');
-        appTitleElement = document.getElementById('app-title');
       });
 
       teardown(function() {
@@ -316,33 +283,19 @@ suite('Contacts', function() {
         window.ActivityHandler.currentlyHandling = prevCurrentlyHandling;
       });
 
-      function checkClassAdded(isFiltered, activityName, activityType) {
-        window.ActivityHandler.activityName = activityName;
-        window.ActivityHandler.activityDataType = [activityType];
-        var classList = document.getElementById('groups-list').classList;
-        Contacts.checkCancelableActivity();
-        assert.isTrue(isFiltered === classList.contains('disable-fb-items'));
-        classList.remove('disable-fb-items');
-      }
-
       test('> handling an activity', function() {
-        Contacts.checkCancelableActivity();
-
-        // Settings is hidden
-        assert.isTrue(settingsButton.hidden);
-        // Add contact is hidden
-        assert.isTrue(addButton.hidden);
-        // Cancel is visible
-        assert.equal(header.getAttribute('action'), 'close');
-        // Title shows CONTACTS
-        assert.equal(appTitleElement.getAttribute('data-l10n-id'), 'contacts');
-      });
-
-      test('> text/vcard pick activity disables Facebook contacts', function() {
-        checkClassAdded(true, 'pick', 'text/vcard');
-        checkClassAdded(false, 'open', 'text/vcard');
-        checkClassAdded(false, 'open', 'webcontacts/contact');
-        checkClassAdded(false, 'pick', 'webcontacts/contact');
+        ActivityHandler.isCancelable().then(() => {
+          HeaderUI.updateHeader(true);
+          // Settings is hidden
+          assert.isTrue(HeaderUI.settingsButton.hidden);
+          // Add contact is hidden
+          assert.isTrue(HeaderUI.addButton.hidden);
+          // Cancel is visible
+          assert.equal(HeaderUI.header.getAttribute('action'), 'close');
+          // Title shows CONTACTS
+          assert.equal(HeaderUI.appTitleElement.getAttribute('data-l10n-id'),
+            'contacts');
+        });
       });
     });
   });
@@ -355,7 +308,7 @@ suite('Contacts', function() {
     var navigation;
     setup(function() {
       navigation = window.navigationStack.firstCall.thisValue;
-      this.sinon.stub(Contacts, 'view', function(view, cb) {
+      this.sinon.stub(Loader, 'view', function(view, cb) {
         cb();
       });
       this.sinon.stub(ContactsService, 'get',
@@ -363,7 +316,6 @@ suite('Contacts', function() {
         cb(theSelectedContact, null);
       });
 
-      this.sinon.spy(window.contacts.NFC, 'startListening');
       this.sinon.spy(ActivityHandler, 'dataPickHandler');
       this.sinon.spy(contacts.Details, 'render');
       this.sinon.spy(navigation, 'go');
@@ -372,27 +324,13 @@ suite('Contacts', function() {
     test('> initializing details', function() {
       Contacts.showContactDetail('1');
 
-      sinon.assert.called(Contacts.view);
+      sinon.assert.called(Loader.view);
       sinon.assert.called(ContactsService.get);
       sinon.assert.called(contacts.Details.render);
       sinon.assert.calledWith(navigation.go,
        'view-contact-details', 'go-deeper');
       sinon.assert.notCalled(ActivityHandler.dataPickHandler);
 
-    });
-
-    test('> when nfc enabled we need to listen to it', function() {
-      var oldNFC = navigator.mozNfc;
-      navigator.mozNfc = true;
-
-      Contacts.showContactDetail('1');
-      sinon.assert.called(window.contacts.NFC.startListening);
-      sinon.assert.called(contacts.Details.render);
-      sinon.assert.calledWith(navigation.go,
-       'view-contact-details', 'go-deeper');
-      sinon.assert.notCalled(ActivityHandler.dataPickHandler);
-
-      navigator.mozNfc = oldNFC;
     });
 
     test('> when handling pick activity, don\'t navigate, send result',
@@ -467,15 +405,7 @@ suite('Contacts', function() {
         assert.isNotNull(handler);
       });
     });
-    test('> loading scripts with nfc enabled', function() {
-      var oldNFC = navigator.mozNfc;
-      navigator.mozNfc = true;
-      Contacts.onLocalized().then(() => {
-        assert.isNotNull(handler);
-        assert.isTrue(lastParams.indexOf('/contacts/js/nfc.js') > -1);
-        navigator.mozNfc = oldNFC;
-      });
-    });
+
     test('> loading scripts while handling an open activity',
      function() {
       ActivityHandler.currentlyHandling = true;
@@ -493,9 +423,9 @@ suite('Contacts', function() {
     }
     setup(function() {
       navigation = window.navigationStack.firstCall.thisValue;
-      this.sinon.spy(Contacts, 'checkCancelableActivity');
+      this.sinon.spy(ActivityHandler, 'isCancelable');
       this.sinon.spy(ActivityHandler, 'postCancel');
-      this.sinon.stub(Contacts, 'view', function(view, cb) {
+      this.sinon.stub(Loader, 'view', function(view, cb) {
         cb();
       });
     });
@@ -531,7 +461,6 @@ suite('Contacts', function() {
           delete document.hidden;
         }
       });
-
     });
   });
 });

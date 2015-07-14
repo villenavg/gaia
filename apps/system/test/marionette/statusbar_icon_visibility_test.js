@@ -4,7 +4,9 @@ var Actions = require('marionette-client').Actions;
 var SETTINGS_APP = 'app://settings.gaiamobile.org';
 
 marionette('Statusbar Visibility', function() {
-  var client = marionette.client();
+  var client = marionette.client({
+    desiredCapabilities: { raisesAccessibilityExceptions: true }
+  });
 
   var actions = new Actions(client);
   var halfScreenHeight, system, grippyHeight;
@@ -43,22 +45,6 @@ marionette('Statusbar Visibility', function() {
         return window.getComputedStyle(element).visibility;
       });
       return (visibility == 'visible');
-    });
-  });
-
-  test('Filter is none when passing the grippyHeight', function() {
-    client.apps.launch(SETTINGS_APP);
-    actions
-      .press(system.topPanel)
-      .moveByOffset(0, grippyHeight + 1)
-      .perform();
-    client.waitFor(function() {
-      // The element is rendered with moz-element so we can't use
-      // marionette's .displayed()
-      var filter = system.statusbar.scriptWith(function(element) {
-        return window.getComputedStyle(element).filter;
-      });
-      return (filter == 'none');
     });
   });
 

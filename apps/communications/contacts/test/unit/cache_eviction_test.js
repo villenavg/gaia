@@ -9,7 +9,9 @@
 /* global MockMozL10n */
 /* global MockNavigationStack */
 /* global MockUtils */
+/* global MockLoader */
 
+requireApp('communications/contacts/test/unit/mock_header_ui.js');
 requireApp('communications/contacts/test/unit/mock_activities.js');
 requireApp('communications/contacts/test/unit/mock_l10n.js');
 requireApp('communications/contacts/test/unit/mock_cache.js');
@@ -18,6 +20,7 @@ requireApp('communications/contacts/test/unit/mock_contacts.js');
 requireApp('communications/contacts/test/unit/mock_contacts_list_obj.js');
 requireApp('communications/contacts/test/unit/mock_event_listeners.js');
 requireApp('communications/contacts/test/unit/mock_asyncstorage.js');
+requireApp('communications/contacts/test/unit/mock_loader.js');
 requireApp('communications/contacts/services/contacts.js');
 requireApp('communications/contacts/js/utilities/ice_data.js');
 require('/shared/test/unit/mocks/mock_ice_store.js');
@@ -30,7 +33,8 @@ var mocksForCacheEviction = new MocksHelper([
   'Cache',
   'Contacts',
   'ICEStore',
-  'LazyLoader'
+  'LazyLoader',
+  'HeaderUI'
 ]).init();
 
 if (!window.navigationStack) {
@@ -53,6 +57,7 @@ suite('Contacts', function() {
   var realUtils;
   var mockNavigation;
   var realMozContacts;
+  var realLoader;
 
   mocksForCacheEviction.attachTestHelpers();
 
@@ -75,6 +80,9 @@ suite('Contacts', function() {
     realNavigationStack = window.navigationStack;
     window.navigationStack = MockNavigationStack;
 
+    realLoader = window.Loader;
+    window.Loader = MockLoader;
+
     sinon.spy(window, 'navigationStack');
     requireApp('communications/contacts/js/utilities/performance_helper.js');
     requireApp('communications/contacts/js/main_navigation.js');
@@ -87,6 +95,7 @@ suite('Contacts', function() {
 
     window.contacts = realContacts;
     window.utils = realUtils;
+    window.loader = realLoader;
 
     window.navigationStack.restore();
     window.navigationStack = realNavigationStack;

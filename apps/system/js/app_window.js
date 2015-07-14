@@ -1,14 +1,20 @@
+/* global LazyLoader */
 /* global AppChrome */
 /* global AudioChannelController */
 /* global BaseModule */
 /* global BrowserFrame */
 /* global ManifestHelper */
+/* global WebManifestHelper */
 /* global ScreenLayout */
 /* global Service */
 /* global DUMP */
+/* global IconsHelper */
+/* global LazyLoader */
 'use strict';
 
 (function(exports) {
+  const ICON_SIZE = 32;
+
   // Turn on this flag to debug all windows.
   var DEBUG = false;
   // Turn on this flag to print all trace in debugging function.
@@ -122,10 +128,10 @@
     // Store initial configuration in this.config
     this.config = configuration;
 
-    if (!this.manifest && this.config && this.config.title) {
-      this.updateName(this.config.title);
-    } else {
+    if (this.manifest) {
       this.name = new ManifestHelper(this.manifest).displayName;
+    } else if (this.config.url) {
+      this.name = new URL(this.config.url).hostname;
     }
 
     // Get icon splash
@@ -188,17 +194,6 @@
       // requests the |navigation| flag in their manifest.
       this.config.chrome.maximized = true;
     }
-  };
-
-  /**
-   * Update the name of this window.
-   * @param {String} name The new name.
-   */
-  AppWindow.prototype.updateName = function aw_updateName(name) {
-    if (this.config && this.config.title) {
-      this.config.title = name;
-    }
-    this.name = name;
   };
 
   /**
@@ -281,6 +276,7 @@
         return;
       }
       this.element.setAttribute('aria-hidden', !visible);
+      this._setVisibleForScreenReader(visible);
     };
 
   /**
@@ -292,11 +288,11 @@
     this.reviveBrowser();
 
     // If we're already showing, do nothing!
-    if (!this.browser.element.classList.contains('hidden')) {
+    if (!this.element.classList.contains('inactive')) {
       return;
     }
 
-    this.browser.element.classList.remove('hidden');
+    this.element.classList.remove('inactive');
     this._setVisible(true);
 
     if (this.isHomescreen) {
@@ -319,12 +315,12 @@
     this.debug('before hiding frame');
 
     // If we're already hidden, we have nothing to do!
-    if (!this.browser || this.browser.element.classList.contains('hidden')) {
+    if (!this.browser || this.element.classList.contains('inactive')) {
       return;
     }
 
     this._setVisible(false);
-    this.browser.element.classList.add('hidden');
+    this.element.classList.add('inactive');
   };
 
   /**
@@ -754,6 +750,7 @@
       // Handle navigating from an app -> browser.
       this.manifestURL = null;
       this.manifest = null;
+      this.name = null;
       this.element.classList.add('browser');
 
       // Reset the browser
@@ -762,12 +759,12 @@
         title: url,
         oop: true
       });
+      this.appChrome && this.appChrome.reConfig();
       this.browserContainer.removeChild(this.browser.element);
       this.browser = new BrowserFrame(this.browser_config);
       this.browserContainer.appendChild(this.browser.element);
       this.iframe = this.browser.element;
       this.launchTime = Date.now();
-      this.appChrome && this.appChrome.reConfig();
     }
 
     this.browser.element.src = url;
@@ -1078,7 +1075,12 @@
     function aw__handle_mozbrowserlocationchange(evt) {
       this.favicons = {};
       this.webManifestURL = null;
+      this.webManifest = null;
       this.config.url = evt.detail;
+      this.title = evt.detail;
+      if (!this.manifest) {
+        this.name = new URL(evt.detail).hostname;
+      }
       // Integration test needs to locate the frame by this attribute.
       this.browser.element.dataset.url = evt.detail;
       this.publish('locationchange');
@@ -1162,22 +1164,38 @@
         case 'application-name':
           // Apps have a compulsory name field in their manifest
           // which takes precedence.
-          if (!this.isBrowser()) {
+          if (this.manifestURL || this.webManifestURL) {
             return;
           }
-          this.updateName(detail.content);
+          this.name = detail.content;
           this.publish('namechanged');
           break;
       }
-
     };
 
   AppWindow.prototype._handle_mozbrowsermanifestchange =
     function aw__handle_mozbrowsermanifestchange(evt) {
-      if (evt.detail.href) {
-        this.webManifestURL = evt.detail.href;
+      if (!evt.detail.href) {
+        return;
       }
+      this.webManifestURL = evt.detail.href;
+      this._updateManifest(this.webManifestURL);
     };
+
+  AppWindow.prototype._updateManifest =
+    function aw_updateManifest(manifestURL) {
+    return LazyLoader.load('/shared/js/web_manifest_helper.js').then(() => {
+      return WebManifestHelper.getManifest(manifestURL);
+    }).then((webManifest) => {
+      this.webManifest = webManifest;
+      if (webManifest.short_name || webManifest.name) {
+        this.name = webManifest.short_name || webManifest.name;
+        this.publish('namechanged');
+      }
+    }).catch(() => {
+      console.error('Failed to get web manifest from ' + manifestURL);
+    });
+  };
 
   AppWindow.prototype._registerEvents = function aw__registerEvents() {
     if (this.element === null) {
@@ -2431,5 +2449,64 @@
       this.statusbar.handleStatusbarTouch(evt, barHeight);
     }
   };
+
+
+  /**
+   * Return a promise that resolves to an icon URL.
+   *
+   * @param {number?} iconSize
+   * @returns {Promise}
+   */
+  AppWindow.prototype.getSiteIconUrl =
+    function ac_getSiteIconUrl(iconSize = ICON_SIZE) {
+    var siteObj = {};
+
+    if (this.webManifestURL && this.webManifest) {
+      siteObj = {
+        webManifestUrl: this.webManifestURL,
+        webManifest: this.webManifest
+      };
+    }
+
+    if (this.webManifestURL && !this.webManifest) {
+      this.debug('getSiteIconUrl: Manifest not loaded yet.');
+    }
+
+    return this.getIconBlob(this.config.url, iconSize,
+                             {icons: this.favicons},
+                             siteObj);
+  };
+
+
+  /**
+   * Return a promise resolving to an icon blob.
+   *
+   * @param {string} origin
+   * @param {number} iconSize
+   * @param {Object?} placeObj
+   * @param {Object?} siteObj
+   * @returns {Promise}
+   */
+  AppWindow.prototype.getIconBlob = function ac_getIconBlob(origin, iconSize,
+    placeObj = {}, siteObj = {}) {
+
+    return new Promise((resolve, reject) => {
+      LazyLoader.load('/shared/js/icons_helper.js').then(() => {
+        IconsHelper.getIconBlob(origin, iconSize, placeObj, siteObj)
+          .then(iconObject => {
+            var iconUrl = URL.createObjectURL(iconObject.blob);
+            resolve({
+              url: iconUrl,
+              isSmall: iconObject.size < iconSize,
+              originalUrl: iconObject.url
+            });
+          })
+          .catch(err => {
+            reject(err);
+          });
+      });
+    });
+  };
+
   exports.AppWindow = AppWindow;
 }(window));

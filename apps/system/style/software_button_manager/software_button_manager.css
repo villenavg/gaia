@@ -4,21 +4,20 @@
   align-items: center;
   justify-content: center;
   right: 0;
-  bottom: calc(var(--software-home-button-height) * -1);
+  bottom: 0;
   left: 0;
   position: absolute;
   height: var(--software-home-button-height);
-  transition-duration: var(--transition-duration);
-  transition-timing-function: ease-in-out;
   visibility: hidden;
   background: black;
 }
 
 #software-buttons-dead-space {
+  pointer-events: auto;
   position: absolute;
   top: 0;
   left: 0;
-  height: 1rem;
+  height: 1.5rem;
   width: 100%;
 }
 
@@ -30,7 +29,6 @@
 #screen:not(.locked) #software-buttons.visible,
 #screen.locked.attention #software-buttons.visible,
 #screen.locked.secure-app #software-buttons.visible {
-  transform: translateY(-100%);
   visibility: visible;
   pointer-events: none;
 }
@@ -61,7 +59,7 @@
   #software-buttons-fullscreen-layout {
     flex-direction: column;
     top: 0;
-    right: calc(var(--software-home-button-height) * -1);
+    right: 0;
     bottom: 0;
     left: auto;
     width: var(--software-home-button-height);
@@ -70,11 +68,6 @@
 
   #software-buttons-fullscreen-layout {
     right: 0;
-  }
-
-  #screen:not(.locked) #software-buttons.visible,
-  #screen.locked.secure-app #software-buttons.visible {
-    transform: translateX(-100%);
   }
 }
 

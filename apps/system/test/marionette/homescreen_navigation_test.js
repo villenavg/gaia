@@ -21,7 +21,8 @@ marionette('Homescreen navigation >', function() {
         'hud.reflows': true,
         'notifications.resend': false
       }
-    }
+    },
+    desiredCapabilities: { raisesAccessibilityExceptions: true }
   });
 
 
@@ -31,7 +32,7 @@ marionette('Homescreen navigation >', function() {
   function launchSettings() {
     var settings = sys.waitForLaunch(SETTINGS_APP);
     client.waitFor(function() {
-      return settings.displayed() && !homescreen.displayed();
+      return settings.ariaDisplayed() && !homescreen.ariaDisplayed();
     });
     return settings;
   }
@@ -39,7 +40,7 @@ marionette('Homescreen navigation >', function() {
   function goHome() {
     sys.goHome();
     client.waitFor(function() {
-      return !settings.displayed() && homescreen.displayed();
+      return !settings.ariaDisplayed() && homescreen.ariaDisplayed();
     });
   }
 
